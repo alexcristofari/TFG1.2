@@ -1,128 +1,184 @@
-// frontend/src/components/movies/MovieSelector.js (v1.1 - Correção de Estilos)
+// frontend/src/components/movies/MovieSelector.js (v4.0 - Minimal Clean Design)
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SelectorStyles = () => (
   <style>{`
-    .movie-selector-container {
-      border: 1px solid #333;
-      padding: 1.5rem;
-      border-radius: 8px;
+    .movie-selector-minimal {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      align-items: center;
+      gap: 2rem;
+      margin: 2rem 0 4rem 0;
     }
-    .movie-selected-list {
+
+    .movie-selector-chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
-      min-height: 24px;
+      justify-content: center;
+      gap: 0.75rem;
+      min-height: 3rem;
+      align-items: center;
     }
-    .movie-selected-item {
-      background-color: #333;
-      padding: 0.5rem 1rem;
-      border-radius: 500px;
-      font-size: 0.9rem;
-      color: #fff;
+
+    .movie-chip {
+      background-color: rgba(229, 9, 20, 0.2);
+      border: 1px solid rgba(229, 9, 20, 0.5);
+      color: #f5f5f5;
+      padding: 0.5rem 1.25rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
     }
-    .movie-recommend-btn {
-      background-color: #E50914;
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      opacity: 0.5;
-      transition: opacity 0.2s;
-      width: 100%;
+
+    .movie-chip:hover {
+      background-color: rgba(229, 9, 20, 0.3);
+      border-color: #E50914;
     }
-    .movie-search-area { grid-column: 1 / -1; }
-    .movie-search-container { position: relative; }
-    .movie-search-input {
-      width: 100%;
-      background-color: #1a1a1a;
-      border: 1px solid #333;
-      color: white;
-      padding: 1rem 1rem 1rem 3rem;
-      font-size: 1rem;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    .movie-search-icon {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 1.2rem;
-      height: 1.2rem;
-      fill: #b3b3b3;
-    }
-    .movie-form-grid {
-      display: grid;
-      grid-template-columns: 1fr 300px;
-      gap: 1.5rem;
-      align-items: start;
-      margin-bottom: 2rem;
-    }
-    .movie-submit-container {
+
+    .movie-selector-controls {
       display: flex;
-      flex-direction: column;
       gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
     }
+
     .movie-genre-select {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f5f5f5;
+      padding: 0.85rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 200px;
+    }
+
+    .movie-genre-select:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .movie-genre-select:focus {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: #E50914;
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1);
+      outline: none;
+    }
+
+    .movie-genre-select option {
       background-color: #1a1a1a;
-      border: 1px solid #333;
-      color: #fff;
-      padding: 1rem;
-      border-radius: 4px;
-      font-size: 1rem;
-      width: 100%;
+      color: #f5f5f5;
+    }
+
+    .movie-recommend-btn-minimal {
+      background: linear-gradient(135deg, #E50914, #b40710);
+      border: 1px solid rgba(229, 9, 20, 0.5);
+      color: #f5f5f5;
+      padding: 0.85rem 2.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+    }
+
+    .movie-recommend-btn-minimal:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(229, 9, 20, 0.3);
+      background: linear-gradient(135deg, #b40710, #E50914);
+    }
+
+    .movie-recommend-btn-minimal:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .movie-selector-hint {
+      font-size: 0.8rem;
+      color: #a0a0a0;
+      text-align: center;
+      letter-spacing: 0.5px;
     }
   `}</style>
 );
 
-function MovieSelector({ selectedMovies, onSearchChange, onRecommend, genres, onGenreChange }) {
+function MovieSelector({ selectedMovies, onRecommend, genres = [], onGenreChange }) {
   const canRecommend = selectedMovies.length >= 3;
+  const remaining = Math.max(0, 3 - selectedMovies.length);
 
   return (
     <>
       <SelectorStyles />
-      {/* A CORREÇÃO ESTÁ EM REMOVER TODOS OS style={styles.algumaCoisa} DAS TAGS ABAIXO */}
-      <div className="movie-form-grid">
-        <div className="movie-selector-container">
-          <h2>Seu Perfil de Filmes</h2>
-          <div className="movie-selected-list">
-            {selectedMovies.map(movie => (
-              <div key={movie.id} className="movie-selected-item">{movie.title}</div>
-            ))}
-          </div>
+      <motion.div
+        className="movie-selector-minimal"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        <div className="movie-selector-chips">
+          <AnimatePresence>
+            {selectedMovies.length === 0 ? (
+              <motion.p
+                className="movie-selector-hint"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                selecione filmes clicando nos pôsteres abaixo
+              </motion.p>
+            ) : (
+              selectedMovies.map((movie) => (
+                <motion.div
+                  key={movie.id}
+                  className="movie-chip"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3 }}
+                  layout
+                >
+                  {movie.title}
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
         </div>
-        <div className="movie-submit-container">
-          <select className="movie-genre-select" onChange={e => onGenreChange(e.target.value)}>
-            <option value="">-- Gênero para Explorar --</option>
-            {genres.map(genre => <option key={genre} value={genre}>{genre}</option>)}
+
+        <div className="movie-selector-controls">
+          <select
+            className="movie-genre-select"
+            onChange={(e) => onGenreChange(e.target.value)}
+            data-testid="genre-select"
+          >
+            <option value="">gênero preferido (opcional)</option>
+            {genres.map((genre) => (
+              <option key={genre} value={genre}>
+                {genre}
+              </option>
+            ))}
           </select>
+
           <button
-            className="movie-recommend-btn"
-            style={{ opacity: canRecommend ? 1 : 0.5 }}
+            className="movie-recommend-btn-minimal"
             disabled={!canRecommend}
             onClick={onRecommend}
+            data-testid="recommend-btn"
           >
-            Gerar Recomendações
+            {canRecommend
+              ? 'gerar recomendações'
+              : `selecione mais ${remaining} ${remaining === 1 ? 'filme' : 'filmes'}`}
           </button>
         </div>
-        <div className="movie-search-area">
-          <div className="movie-search-container">
-            <svg className="movie-search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-            <input
-              type="text"
-              className="movie-search-input"
-              placeholder="Busque por um filme para adicionar ao seu perfil..."
-              onChange={e => onSearchChange(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
+      </motion.div>
     </>
   );
 }
