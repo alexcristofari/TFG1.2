@@ -1,150 +1,272 @@
-// frontend/src/components/music/MusicPage.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// frontend/src/components/music/MusicResultsPage.js (v3.0 - Minimal Clean Design)
+import React from 'react';
+import { motion } from 'framer-motion';
 import MusicCard from './MusicCard';
-import MusicSelector from './MusicSelector';
-// import MusicResultsPage from './MusicResultsPage'; // Importaremos depois
 
 const PageStyles = () => (
   <style>{`
-    .music-page-container {
-      padding: 2rem;
-      background-color: #121212;
-      color: white;
+    .music-results-container {
       min-height: 100vh;
+      background-color: #0a0a0a;
+      color: #f5f5f5;
+      padding: 4rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .music-page-header { text-align: center; margin-bottom: 2rem; }
-    .music-page-title { font-size: 2.5rem; color: #1DB954; }
-    .music-section-title { font-size: 1.8rem; border-bottom: 1px solid #282828; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
-    .music-loading { text-align: center; font-size: 1.5rem; color: #b3b3b3; padding-top: 5rem; }
-    .music-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+
+    .music-results-content {
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .music-results-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .music-results-title {
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: #0d7a3f;
+      letter-spacing: 0;
+      margin-bottom: 1rem;
+      line-height: 1;
+    }
+
+    .music-profile-summary {
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 3rem;
+    }
+
+    .music-profile-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #f5f5f5;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.5px;
+    }
+
+    .music-profile-tracks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .music-profile-track-tag {
+      background-color: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f5f5f5;
+      padding: 0.5rem 1.25rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+    }
+
+    .music-profile-genres-label {
+      font-size: 0.85rem;
+      color: #a0a0a0;
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.5px;
+    }
+
+    .music-profile-genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .music-profile-genre-tag {
+      background-color: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f5f5f5;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 400;
+    }
+
+    .music-profile-highlights {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .music-profile-highlight {
+      background: linear-gradient(135deg, rgba(13, 122, 63, 0.3), rgba(10, 92, 48, 0.2));
+      border: 1px solid rgba(13, 122, 63, 0.5);
+      color: #f5f5f5;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .music-category-section {
+      margin: 4rem 0;
+    }
+
+    .music-category-title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: #f5f5f5;
+      margin-bottom: 2rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      letter-spacing: 0.3px;
+    }
+
+    .music-results-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+    }
+
+    @media (max-width: 1200px) {
+      .music-results-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .music-results-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .music-results-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .music-back-button {
+      background: linear-gradient(135deg, #0d7a3f, #0a5c30);
+      border: 1px solid rgba(13, 122, 63, 0.5);
+      color: #f5f5f5;
+      padding: 1rem 2.5rem;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+      margin: 4rem auto 0;
+      display: block;
+    }
+
+    .music-back-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(13, 122, 63, 0.4);
+      background: linear-gradient(135deg, #0a5c30, #0d7a3f);
+    }
   `}</style>
 );
 
-function MusicPage() {
-  const [iconicTracks, setIconicTracks] = useState([]);
-  const [exploreTracks, setExploreTracks] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTracks, setSelectedTracks] = useState([]);
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
 
-  // Efeito para buscar os dados de descoberta (discover)
-  useEffect(() => {
-    axios.get('/api/music/discover')
-      .then(response => {
-        // Precisamos buscar os detalhes (imagens) separadamente
-        fetchTrackDetails(response.data.iconic_tracks, setIconicTracks);
-        fetchTrackDetails(response.data.explore_tracks, setExploreTracks);
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error("Erro ao buscar dados de descoberta de músicas!", error);
-        setIsLoading(false);
-      });
-  }, []);
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1 },
+};
 
-  // Efeito para buscar resultados de pesquisa
-  useEffect(() => {
-    if (searchQuery.length < 3) {
-      setSearchResults([]);
-      return;
-    }
-    const timer = setTimeout(() => {
-      axios.get(`/api/music/search?q=${searchQuery}`)
-        .then(response => {
-          fetchTrackDetails(response.data, setSearchResults);
-        })
-        .catch(error => console.error("Erro ao buscar músicas!", error));
-    }, 300); // Debounce para não fazer requisições a cada letra digitada
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+function MusicResultsPage({ recommendations, profile, onBack }) {
+  const { main, hidden_gems, genre_favorites } = recommendations || {};
+  const { tracks, dominant_genre, selected_genre, genres_found } = profile || {};
 
-  // Função para buscar imagens e URLs de prévia
-  const fetchTrackDetails = (tracks, setter) => {
-    if (!tracks || tracks.length === 0) {
-      setter([]);
-      return;
-    }
-    const trackIds = tracks.map(t => t.id);
-    axios.post('/api/music/get-track-details', { track_ids: trackIds })
-      .then(detailsRes => {
-        const enrichedTracks = tracks.map(track => ({
-          ...track,
-          image_url: detailsRes.data[track.id]?.image_url,
-          preview_url: detailsRes.data[track.id]?.preview_url,
-        }));
-        setter(enrichedTracks);
-      });
-  };
-
-  const handleCardClick = (track) => {
-    setSelectedTracks(prev =>
-      prev.find(t => t.id === track.id)
-        ? prev.filter(t => t.id !== track.id)
-        : [...prev, track]
+  const renderCategory = (title, tracksList) => {
+    if (!tracksList || tracksList.length === 0) return null;
+    return (
+      <motion.section className="music-category-section" variants={itemVariants}>
+        <h2 className="music-category-title">{title}</h2>
+        <div className="music-results-grid">
+          {tracksList.map(track => (
+            <MusicCard key={track.id} track={track} onClick={() => {}} isSelected={false} />
+          ))}
+        </div>
+      </motion.section>
     );
   };
-
-  const handleGetRecommendations = () => {
-    // Lógica para gerar recomendações virá aqui
-    alert("Gerando recomendações para: " + selectedTracks.map(t => t.name).join(', '));
-  };
-
-  const isSelected = (track) => !!selectedTracks.find(t => t.id === track.id);
-  const showDiscoverSections = searchQuery.length < 3;
-
-  if (isLoading) {
-    return <div className="music-loading">Carregando músicas...</div>;
-  }
 
   return (
     <>
       <PageStyles />
-      <div className="music-page-container">
-        <header className="music-page-header">
-          <h1 className="music-page-title">Recomendador de Músicas</h1>
-          <p>Escolha 3 ou mais músicas que você gosta.</p>
-        </header>
+      <motion.div
+        className="music-results-container"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <div className="music-results-content">
+          <motion.header className="music-results-header" variants={itemVariants}>
+            <h1 className="music-results-title">Suas Recomendações Musicais</h1>
+          </motion.header>
 
-        <MusicSelector
-          selectedTracks={selectedTracks}
-          onSearchChange={setSearchQuery}
-          onRecommend={handleGetRecommendations}
-        />
-
-        {showDiscoverSections ? (
-          <>
-            <section>
-              <h2 className="music-section-title">Ícones Globais</h2>
-              <div className="music-grid">
-                {iconicTracks.map(track => (
-                  <MusicCard key={track.id} track={track} onClick={() => handleCardClick(track)} isSelected={isSelected(track)} />
+          {profile && (
+            <motion.div className="music-profile-summary" variants={itemVariants}>
+              <h3 className="music-profile-title">Seu Perfil Musical</h3>
+              
+              <div className="music-profile-tracks">
+                {tracks?.map(track => (
+                  <span key={track.id} className="music-profile-track-tag">
+                    {track.name} - {track.artists}
+                  </span>
                 ))}
               </div>
-            </section>
-            <section style={{ marginTop: '2rem' }}>
-              <h2 className="music-section-title">Para Explorar</h2>
-              <div className="music-grid">
-                {exploreTracks.map(track => (
-                  <MusicCard key={track.id} track={track} onClick={() => handleCardClick(track)} isSelected={isSelected(track)} />
-                ))}
+
+              {genres_found && genres_found.length > 0 && (
+                <>
+                  <p className="music-profile-genres-label">Gêneros encontrados na sua seleção:</p>
+                  <div className="music-profile-genres">
+                    {genres_found.map((genre, idx) => (
+                      <span key={idx} className="music-profile-genre-tag">{genre}</span>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div className="music-profile-highlights">
+                {dominant_genre && (
+                  <span className="music-profile-highlight">
+                    Gênero Dominante: {dominant_genre}
+                  </span>
+                )}
+                {selected_genre && (
+                  <span className="music-profile-highlight">
+                    Explorando: {selected_genre}
+                  </span>
+                )}
               </div>
-            </section>
-          </>
-        ) : (
-          <section>
-            <h2 className="music-section-title">Resultados da Busca</h2>
-            <div className="music-grid">
-              {searchResults.map(track => (
-                <MusicCard key={track.id} track={track} onClick={() => handleCardClick(track)} isSelected={isSelected(track)} />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
+            </motion.div>
+          )}
+
+          {renderCategory("Recomendações Principais", main)}
+          {renderCategory("Jóias Escondidas", hidden_gems)}
+          {selected_genre && renderCategory(`Melhores de ${selected_genre}`, genre_favorites)}
+
+          <motion.button 
+            className="music-back-button" 
+            onClick={onBack} 
+            variants={itemVariants}
+            data-testid="back-to-discover-btn"
+          >
+            Fazer Nova Recomendação
+          </motion.button>
+        </div>
+      </motion.div>
     </>
   );
 }
 
-export default MusicPage;
+export default MusicResultsPage;

@@ -1,68 +1,182 @@
-// frontend/src/components/music/MusicCard.js
+// frontend/src/components/music/MusicCard.js (v3.0 - Minimal Clean Design)
 import React from 'react';
+import { motion } from 'framer-motion';
 
 const CardStyles = () => (
   <style>{`
-    .music-card-container {
-      background-color: #181818;
-      padding: 1rem;
-      border-radius: 8px;
-      transition: background-color 0.2s, transform 0.2s;
-      cursor: pointer;
+    .music-card-minimal {
       position: relative;
-      border: 2px solid transparent;
-    }
-    .music-card-container:hover {
-      background-color: #282828;
-      transform: scale(1.03);
-    }
-    .music-card-container.selected {
-      border-color: #1DB954;
-      transform: scale(1.03);
-    }
-    .music-card-img-wrapper {
-      position: relative;
-      margin-bottom: 1rem;
-    }
-    .music-card-img {
       width: 100%;
-      padding-bottom: 100%;
-      background-color: #282828;
-      border-radius: 4px;
-      background-size: cover;
-      background-position: center;
-    }
-    .music-card-title {
-      font-weight: 700;
-      display: block;
-      white-space: nowrap;
+      aspect-ratio: 1 / 1;
+      border-radius: 8px;
       overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 0.25rem;
-      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
     }
-    .music-card-subtitle {
-      font-size: 0.9rem;
-      color: #b3b3b3;
+
+    .music-card-minimal:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .music-card-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .music-card-minimal:hover .music-card-image {
+      transform: scale(1.05);
+    }
+
+    .music-card-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        to top,
+        rgba(10, 10, 10, 0.95) 0%,
+        rgba(10, 10, 10, 0.6) 50%,
+        transparent 100%
+      );
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.5rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .music-card-minimal:hover .music-card-overlay {
+      opacity: 1;
+    }
+
+    .music-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f5f5f5;
+      margin: 0 0 0.25rem 0;
+      letter-spacing: 0.3px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .music-card-artist {
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: #a0a0a0;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .music-card-score {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background-color: rgba(10, 10, 10, 0.8);
+      backdrop-filter: blur(8px);
+      color: #f5f5f5;
+      padding: 0.4rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .music-card-selected {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 3px solid #0d7a3f;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(13, 122, 63, 0.6), inset 0 0 20px rgba(13, 122, 63, 0.2);
+      pointer-events: none;
+    }
+
+    .music-card-checkmark {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background-color: #0d7a3f;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(13, 122, 63, 0.5);
+    }
+
+    .music-card-checkmark svg {
+      width: 18px;
+      height: 18px;
+      fill: #f5f5f5;
     }
   `}</style>
 );
 
 function MusicCard({ track, onClick, isSelected }) {
-  const cardClassName = `music-card-container ${isSelected ? 'selected' : ''}`;
+  const score = track.similarity_score 
+    ? `${Math.round(track.similarity_score)}%` 
+    : track.penalized_score 
+    ? `${Math.round(track.penalized_score)}%` 
+    : null;
 
   return (
     <>
       <CardStyles />
-      <div className={cardClassName} onClick={onClick}>
-        <div className="music-card-img-wrapper">
-          <div className="music-card-img" style={{ backgroundImage: `url(${track.image_url})` }}></div>
+      <motion.div
+        className="music-card-minimal"
+        onClick={onClick}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        data-testid={`music-card-${track.id}`}
+      >
+        <img src={track.image_url} alt={track.name} className="music-card-image" />
+        
+        <div className="music-card-overlay">
+          <h3 className="music-card-title">{track.name}</h3>
+          <p className="music-card-artist">{track.artists}</p>
         </div>
-        <div className="card-content">
-          <strong className="music-card-title">{track.name}</strong>
-          <span className="music-card-subtitle">{track.artists}</span>
-        </div>
-      </div>
+
+        {score && <div className="music-card-score">{score}</div>}
+
+        {isSelected && (
+          <>
+            <motion.div
+              className="music-card-selected"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            />
+            <motion.div
+              className="music-card-checkmark"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+              </svg>
+            </motion.div>
+          </>
+        )}
+      </motion.div>
     </>
   );
 }
