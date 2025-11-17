@@ -1,0 +1,4 @@
+# api-gateway/requirements.txt
+Flask>=2.0
+requests>=2.25
+python-dotenv>=0.19

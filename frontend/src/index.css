@@ -1,0 +1,33 @@
+/* frontend/src/index.css (v2.0 - Steam UI Overhaul) */
+
+/* 1. Importando a fonte que imita a da Steam (Motiva Sans) */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&display=swap' );
+
+/* 2. Definindo variáveis de cor globais para consistência */
+:root {
+  --steam-dark-blue: #1b2838;
+  --steam-darker-blue: #121a25;
+  --steam-light-blue: #66c0f4;
+  --steam-medium-blue: #2a475e;
+  --steam-font-color: #c7d5e0;
+  --steam-font-bright: #ffffff;
+}
+
+/* 3. Aplicando estilos base para todo o corpo da aplicação */
+body {
+  margin: 0;
+  /* A FONTE É APLICADA AQUI */
+  font-family: 'Noto Sans', 'Motiva Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--steam-darker-blue); /* Fundo padrão para toda a app */
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Remove o outline azul padrão em inputs e botões ao focar */
+*:focus {
+  outline: none;
+}
