@@ -1,4 +1,4 @@
-// frontend/src/App.js (v5.5 - Integração com Estado Global)
+// frontend/src/App.js (v6.0 - Integração com Design Minimalista)
 import React, { useState } from 'react';
 import './App.css';
 
@@ -8,18 +8,17 @@ import GamesPage from './components/games/GamesPage';
 import MusicPage from './components/music/MusicPage';
 import MoviePage from './components/movies/MoviePage';
 
-// --- PASSO 1: Importa o DataProvider e o hook useData ---
+// Importa o DataProvider e o hook useData
 import { DataProvider, useData } from './context/DataContext';
 
-// --- PASSO 2: Cria um componente interno para ter acesso ao contexto ---
-// O AppContent é o seu App antigo, mas agora ele pode "ler" os dados globais
+// Componente interno para ter acesso ao contexto
 function AppContent() {
   const [activeSystem, setActiveSystem] = useState('home');
   
-  // Pega o estado de loading e o status do nosso Contexto Global
+  // Pega o estado de loading e o status do Contexto Global
   const { isLoading, loadingStatus } = useData();
 
-  // Estilos e funções do botão (seu código original, intacto)
+  // Estilos do botão de voltar
   const backButtonStyle = {
     position: 'fixed',
     top: '20px',
@@ -52,14 +51,14 @@ function AppContent() {
       style={backButtonStyle}
       onMouseOver={handleMouseOver}
       onMouseOut={handleMouseOut}
+      data-testid="back-button"
     >
       ‹ Voltar para Home
     </button>
   );
 
-  // --- PASSO 3: Adiciona a tela de loading global ---
-  // Se os dados globais estiverem carregando, mostra a tela de loading e nada mais.
-  if (isLoading) {
+  // Se não estiver na home e os dados estiverem carregando, mostra tela de loading
+  if (isLoading && activeSystem !== 'home') {
     return (
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -72,7 +71,7 @@ function AppContent() {
     );
   }
 
-  // Se não estiver carregando, renderiza o sistema normalmente
+  // Renderiza o sistema ativo
   const renderActiveSystem = () => {
     switch (activeSystem) {
       case 'games':
@@ -111,9 +110,7 @@ function AppContent() {
   );
 }
 
-// --- PASSO 4: O componente App principal agora só envolve o AppContent com o Provider ---
-// Isso garante que o AppContent e todos os seus filhos (HomePage, GamesPage, etc.)
-// possam usar o hook `useData()` para acessar os dados globais.
+// Componente App principal envolve o AppContent com o Provider
 function App() {
   return (
     <DataProvider>
