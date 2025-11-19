@@ -1,9 +1,8 @@
-// frontend/src/components/movies/MoviePage.js (v4.0 - Minimal Clean Design)
+// frontend/src/components/movies/MoviePage.js (v5.0 - Padrão Ouro Netflix)
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import MovieCard from './MovieCard';
-import MovieSelector from './MovieSelector';
 import MovieResultsPage from './MovieResultsPage';
 
 const PageStyles = () => (
@@ -12,50 +11,30 @@ const PageStyles = () => (
       min-height: 100vh;
       background-color: #0a0a0a;
       color: #f5f5f5;
-      padding: 4rem 2rem;
+      padding: 1rem 2rem 4rem 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
     .movies-minimal-content {
-      max-width: 1200px;
+      max-width: 1400px;
       width: 100%;
     }
 
-    .movies-minimal-header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-
-    .movies-minimal-title {
-      font-size: 2.5rem;
-      font-weight: 600;
-      color: #E50914;
-      letter-spacing: 0;
-      margin-bottom: 1rem;
-      line-height: 1;
-    }
-
-    .movies-minimal-subtitle {
-      font-size: 0.95rem;
-      font-weight: 300;
-      color: #a0a0a0;
-      letter-spacing: 1.5px;
-      margin-top: 0.5rem;
-    }
-
-    .movies-search-wrapper {
-      margin: 3rem auto;
+    .movies-top-controls {
       display: flex;
-      justify-content: center;
-      max-width: 1000px;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      margin-top: 4.5rem;
+      flex-wrap: wrap;
     }
 
     .movies-search-box {
       position: relative;
-      width: 100%;
-      max-width: 1000px;
+      flex: 2;
+      min-width: 300px;
     }
 
     .movies-search-input {
@@ -63,8 +42,8 @@ const PageStyles = () => (
       background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #f5f5f5;
-      padding: 1rem 1rem 1rem 3rem;
-      font-size: 0.95rem;
+      padding: 0.85rem 0.85rem 0.85rem 2.5rem;
+      font-size: 0.9rem;
       border-radius: 50px;
       font-family: 'Inter', sans-serif;
       transition: all 0.3s ease;
@@ -83,44 +62,125 @@ const PageStyles = () => (
 
     .movies-search-icon {
       position: absolute;
-      left: 1rem;
+      left: 0.85rem;
       top: 50%;
       transform: translateY(-50%);
-      width: 1.2rem;
-      height: 1.2rem;
+      width: 1rem;
+      height: 1rem;
       fill: #a0a0a0;
     }
 
-    .movies-section {
-      margin: 4rem auto;
-      max-width: 1000px;
+    .movies-genre-select {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f5f5f5;
+      padding: 0.85rem 1.2rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+      min-width: 180px;
     }
 
-    .movies-section-label {
-      font-size: 0.8rem;
+    .movies-genre-select:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .movies-genre-select:focus {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: #E50914;
+      outline: none;
+    }
+
+    .movies-genre-select option {
+      background-color: #1a1a1a;
+      color: #f5f5f5;
+    }
+
+    .movies-recommend-btn-compact {
+      background: linear-gradient(135deg, #E50914, #b40710);
+      border: 1px solid rgba(229, 9, 20, 0.5);
+      color: #f5f5f5;
+      padding: 0.85rem 2rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
       font-weight: 500;
-      color: #a0a0a0;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      margin-bottom: 2.5rem;
-      text-align: center;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .movies-recommend-btn-compact:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(229, 9, 20, 0.3);
+    }
+
+    .movies-recommend-btn-compact:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .movies-selected-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      min-height: 2rem;
+    }
+
+    .movies-chip {
+      background-color: rgba(229, 9, 20, 0.15);
+      border: 1px solid rgba(229, 9, 20, 0.4);
+      color: #f5f5f5;
+      padding: 0.4rem 1rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      transition: all 0.3s ease;
+    }
+
+    .movies-chip:hover {
+      background-color: rgba(229, 9, 20, 0.25);
+      border-color: #E50914;
+    }
+
+    .movies-section {
+      margin: 3rem auto 0 auto;
     }
 
     .movies-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
-      max-width: 1000px;
-      margin: 0 auto;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1400px) {
+      .movies-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
 
     @media (max-width: 1024px) {
+      .movies-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
       .movies-grid {
         grid-template-columns: repeat(2, 1fr);
       }
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 480px) {
       .movies-grid {
         grid-template-columns: 1fr;
       }
@@ -137,35 +197,44 @@ const PageStyles = () => (
       justify-content: center;
       background-color: #0a0a0a;
       z-index: 100;
-      flex-direction: column;
-      gap: 1rem;
     }
 
-    .movies-loading-text {
-      color: #E50914;
-      font-weight: 300;
-      font-size: 1.5rem;
-      letter-spacing: 1px;
+    .movies-loading-dots {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .movies-loading-dot {
+      width: 12px;
+      height: 12px;
+      background-color: #E50914;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .movies-loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .movies-loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
     }
 
     .movies-pagination {
       display: flex;
       justify-content: center;
       gap: 1rem;
-      margin-top: 3rem;
-      max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
+      margin-top: 2rem;
     }
 
     .movies-page-btn {
       background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #f5f5f5;
-      padding: 0.75rem 1.5rem;
+      padding: 0.65rem 1.3rem;
       border-radius: 50px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-family: 'Inter', sans-serif;
       transition: all 0.3s ease;
     }
@@ -185,21 +254,20 @@ const PageStyles = () => (
       display: flex;
       align-items: center;
       color: #a0a0a0;
-      font-size: 0.9rem;
-      padding: 0 1rem;
+      font-size: 0.85rem;
+      padding: 0 0.8rem;
     }
   `}</style>
 );
 
-const LoadingScreen = ({ text }) => (
-  <motion.div
-    className="movies-loading-screen"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-  >
-    <h1 className="movies-loading-text">{text}</h1>
-  </motion.div>
+const LoadingScreen = () => (
+  <div className="movies-loading-screen">
+    <div className="movies-loading-dots">
+      <div className="movies-loading-dot"></div>
+      <div className="movies-loading-dot"></div>
+      <div className="movies-loading-dot"></div>
+    </div>
+  </div>
 );
 
 function MoviePage() {
@@ -216,16 +284,14 @@ function MoviePage() {
   const [selectedGenre, setSelectedGenre] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
 
-  const MOVIES_PER_PAGE = 6;
+  const MOVIES_PER_PAGE = 18;
 
-  // Combina popular e acclaimed para ter ~30-40 filmes
   const allMovies = useMemo(() => {
     const combined = [...popularReleases, ...criticallyAcclaimed];
-    // Remove duplicatas por id
     const unique = combined.filter(
       (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
     );
-    return unique.slice(0, 40); // Limita a 40 filmes
+    return unique.slice(0, 120);
   }, [popularReleases, criticallyAcclaimed]);
 
   const totalPages = Math.ceil(allMovies.length / MOVIES_PER_PAGE);
@@ -234,21 +300,7 @@ function MoviePage() {
     (currentPage + 1) * MOVIES_PER_PAGE
   );
 
-  const debouncedSearch = useMemo(() => {
-    let timer;
-    return (query) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        axios
-          .get(`/api/movies/search?q=${query}`)
-          .then((response) => setSearchResults(response.data || []))
-          .catch((error) => console.error('Erro ao buscar filmes!', error));
-      }, 300);
-    };
-  }, []);
-
   useEffect(() => {
-    // Busca dados de descoberta e gêneros
     Promise.all([
       axios.get('/api/movies/discover'),
       axios.get('/api/movies/genres')
@@ -258,9 +310,30 @@ function MoviePage() {
       setGenres(genresRes.data || []);
       setIsDiscoverLoading(false);
     }).catch(error => {
-      console.error('Erro ao buscar dados iniciais de filmes!', error);
+      console.error('Erro ao carregar filmes:', error);
       setIsDiscoverLoading(false);
     });
+  }, []);
+
+  useEffect(() => {
+    if (currentPage >= totalPages && totalPages > 0) {
+      setCurrentPage(Math.max(0, totalPages - 1));
+    }
+  }, [totalPages, currentPage]);
+
+  const debouncedSearch = useMemo(() => {
+    let timer;
+    return (query) => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        try {
+          const response = await axios.get(`/api/movies/search?q=${query}`);
+          setSearchResults(response.data || []);
+        } catch (error) {
+          console.error('Erro na busca:', error);
+        }
+      }, 300);
+    };
   }, []);
 
   useEffect(() => {
@@ -280,31 +353,24 @@ function MoviePage() {
     );
   };
 
-  const handleGetRecommendations = () => {
+  const handleGetRecommendations = async () => {
     setIsRecommendLoading(true);
     const selectedIds = selectedMovies.map((m) => m.id);
 
-    axios
-      .post('/api/movies/recommend', { movie_ids: selectedIds, genre: selectedGenre })
-      .then((response) => {
-        const data = response.data;
-        if (data && data.recommendations && data.profile) {
-          setRecommendationResults(data);
-          setView('results');
-          setIsRecommendLoading(false);
-        } else {
-          console.error('Estrutura de dados da recomendação é inválida:', data);
-          alert('Ocorreu um erro inesperado ao processar as recomendações.');
-          setIsRecommendLoading(false);
-          setView('discover');
-        }
-      })
-      .catch((error) => {
-        console.error('Erro ao buscar recomendações de filmes:', error);
-        alert('Ocorreu um erro ao gerar as recomendações.');
-        setIsRecommendLoading(false);
-        setView('discover');
+    try {
+      const response = await axios.post('/api/movies/recommend', {
+        movie_ids: selectedIds,
+        genre: selectedGenre
       });
+
+      setRecommendationResults(response.data);
+      setView('results');
+    } catch (error) {
+      console.error('Erro ao gerar recomendações:', error);
+      alert('Erro ao gerar recomendações');
+    } finally {
+      setIsRecommendLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -318,54 +384,35 @@ function MoviePage() {
 
   const isSelected = (movie) => !!selectedMovies.find((m) => m.id === movie.id);
   const showDiscoverSections = searchQuery.length < 3;
+  const canRecommend = selectedMovies.length >= 3;
 
   const handleNextPage = () => {
-    if (currentPage < totalPages - 1) {
-      setCurrentPage(currentPage + 1);
-    }
+    if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
   };
 
   const handlePrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
-  if (isDiscoverLoading) return <LoadingScreen text="Carregando filmes..." />;
-  if (isRecommendLoading) return <LoadingScreen text="Gerando recomendações..." />;
+  if (isDiscoverLoading || isRecommendLoading) return <LoadingScreen />;
 
-  if (view === 'results')
+  if (view === 'results') {
     return (
       <MovieResultsPage
         recommendations={recommendationResults.recommendations}
         profile={recommendationResults.profile}
+        selectedGenre={selectedGenre}
         onBack={handleReset}
       />
     );
+  }
 
   return (
     <>
       <PageStyles />
       <div className="movies-minimal-container">
         <div className="movies-minimal-content">
-          <motion.header
-            className="movies-minimal-header"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="movies-minimal-title">Filmes</h1>
-            <p className="movies-minimal-subtitle">descubra sua próxima sessão</p>
-          </motion.header>
-
-          <MovieSelector
-            selectedMovies={selectedMovies}
-            onRecommend={handleGetRecommendations}
-            genres={genres}
-            onGenreChange={setSelectedGenre}
-          />
-
-          <div className="movies-search-wrapper">
+          <div className="movies-top-controls">
             <div className="movies-search-box">
               <svg className="movies-search-icon" viewBox="0 0 24 24">
                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
@@ -376,80 +423,95 @@ function MoviePage() {
                 placeholder="buscar filmes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                data-testid="movies-search-input"
               />
             </div>
+
+            <select
+              className="movies-genre-select"
+              onChange={(e) => setSelectedGenre(e.target.value)}
+              value={selectedGenre}
+            >
+              <option value="">gênero (opcional)</option>
+              {genres.map((genre) => (
+                <option key={genre} value={genre}>{genre}</option>
+              ))}
+            </select>
+
+            <button
+              className="movies-recommend-btn-compact"
+              disabled={!canRecommend}
+              onClick={handleGetRecommendations}
+            >
+              {canRecommend ? 'gerar recomendações' : `selecione ${3 - selectedMovies.length}`}
+            </button>
           </div>
 
-          <AnimatePresence mode="wait">
-            {showDiscoverSections ? (
+          <AnimatePresence>
+            {selectedMovies.length > 0 && (
               <motion.div
-                key="discover"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
+                className="movies-selected-chips"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
               >
-                <section className="movies-section">
-                  <h2 className="movies-section-label">Explorar</h2>
-                  <div className="movies-grid">
-                    {currentMovies.map((movie) => (
-                      <MovieCard
-                        key={movie.id}
-                        movie={movie}
-                        onClick={() => handleCardClick(movie)}
-                        isSelected={isSelected(movie)}
-                      />
-                    ))}
-                  </div>
-                  {totalPages > 1 && (
-                    <div className="movies-pagination">
-                      <button
-                        className="movies-page-btn"
-                        onClick={handlePrevPage}
-                        disabled={currentPage === 0}
-                        data-testid="prev-page-btn"
-                      >
-                        ← Anterior
-                      </button>
-                      <div className="movies-page-indicator">
-                        {currentPage + 1} / {totalPages}
-                      </div>
-                      <button
-                        className="movies-page-btn"
-                        onClick={handleNextPage}
-                        disabled={currentPage === totalPages - 1}
-                        data-testid="next-page-btn"
-                      >
-                        Próximo →
-                      </button>
-                    </div>
-                  )}
-                </section>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="search"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <section className="movies-section">
-                  <h2 className="movies-section-label">Resultados</h2>
-                  <div className="movies-grid">
-                    {searchResults.map((movie) => (
-                      <MovieCard
-                        key={movie.id}
-                        movie={movie}
-                        onClick={() => handleCardClick(movie)}
-                        isSelected={isSelected(movie)}
-                      />
-                    ))}
-                  </div>
-                </section>
+                {selectedMovies.map((movie) => (
+                  <motion.div
+                    key={movie.id}
+                    className="movies-chip"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    layout
+                  >
+                    {movie.title}
+                  </motion.div>
+                ))}
               </motion.div>
             )}
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            <motion.section
+              className="movies-section"
+              key={showDiscoverSections ? 'discover' : 'search'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="movies-grid">
+                {(showDiscoverSections ? currentMovies : searchResults).map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    onClick={() => handleCardClick(movie)}
+                    isSelected={isSelected(movie)}
+                  />
+                ))}
+              </div>
+
+              {showDiscoverSections && totalPages > 1 && (
+                <div className="movies-pagination">
+                  <button
+                    className="movies-page-btn"
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 0}
+                  >
+                    ← Anterior
+                  </button>
+                  <div className="movies-page-indicator">
+                    {currentPage + 1} / {totalPages}
+                  </div>
+                  <button
+                    className="movies-page-btn"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages - 1}
+                  >
+                    Próximo →
+                  </button>
+                </div>
+              )}
+            </motion.section>
           </AnimatePresence>
         </div>
       </div>
