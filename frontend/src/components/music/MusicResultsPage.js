@@ -1,4 +1,4 @@
-// frontend/src/components/music/MusicResultsPage.js (v3.0 - Minimal Clean Design)
+// frontend/src/components/music/MusicResultsPage.js (v4.0 - Igual ao de Filmes)
 import React from 'react';
 import { motion } from 'framer-motion';
 import MusicCard from './MusicCard';
@@ -16,7 +16,7 @@ const PageStyles = () => (
     }
 
     .music-results-content {
-      max-width: 1200px;
+      max-width: 1400px;
       width: 100%;
     }
 
@@ -29,25 +29,25 @@ const PageStyles = () => (
       font-size: 2.5rem;
       font-weight: 600;
       color: #0d7a3f;
-      letter-spacing: 0;
+      letter-spacing: -0.02em;
       margin-bottom: 1rem;
-      line-height: 1;
+      line-height: 1.2;
     }
 
     .music-profile-summary {
       background-color: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
       padding: 2rem;
-      border-radius: 12px;
-      margin-bottom: 3rem;
+      border-radius: 16px;
+      margin-bottom: 4rem;
     }
 
     .music-profile-title {
-      font-size: 1.2rem;
-      font-weight: 500;
+      font-size: 1.3rem;
+      font-weight: 600;
       color: #f5f5f5;
       margin-bottom: 1.5rem;
-      letter-spacing: 0.5px;
+      letter-spacing: 0;
     }
 
     .music-profile-tracks {
@@ -69,10 +69,10 @@ const PageStyles = () => (
     }
 
     .music-profile-genres-label {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       color: #a0a0a0;
       margin-bottom: 0.75rem;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
 
     .music-profile-genres {
@@ -114,36 +114,40 @@ const PageStyles = () => (
     }
 
     .music-category-title {
-      font-size: 1.5rem;
-      font-weight: 500;
+      font-size: 1.6rem;
+      font-weight: 600;
       color: #f5f5f5;
       margin-bottom: 2rem;
       padding-bottom: 0.75rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      letter-spacing: 0.3px;
+      letter-spacing: -0.01em;
     }
 
     .music-results-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 2rem;
     }
 
     @media (max-width: 1200px) {
       .music-results-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
       }
     }
 
     @media (max-width: 768px) {
       .music-results-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
       }
-    }
 
-    @media (max-width: 480px) {
-      .music-results-grid {
-        grid-template-columns: 1fr;
+      .music-results-title {
+        font-size: 2rem;
+      }
+
+      .music-category-title {
+        font-size: 1.3rem;
       }
     }
 
@@ -161,6 +165,7 @@ const PageStyles = () => (
       letter-spacing: 0.5px;
       margin: 4rem auto 0;
       display: block;
+      border: none;
     }
 
     .music-back-button:hover {
@@ -173,7 +178,7 @@ const PageStyles = () => (
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
 const itemVariants = {
@@ -192,7 +197,12 @@ function MusicResultsPage({ recommendations, profile, onBack }) {
         <h2 className="music-category-title">{title}</h2>
         <div className="music-results-grid">
           {tracksList.map(track => (
-            <MusicCard key={track.id} track={track} onClick={() => {}} isSelected={false} />
+            <MusicCard
+              key={track.id}
+              track={track}
+              onClick={() => {}}
+              isSelected={false}
+            />
           ))}
         </div>
       </motion.section>
@@ -216,14 +226,19 @@ function MusicResultsPage({ recommendations, profile, onBack }) {
           {profile && (
             <motion.div className="music-profile-summary" variants={itemVariants}>
               <h3 className="music-profile-title">Seu Perfil Musical</h3>
-              
-              <div className="music-profile-tracks">
-                {tracks?.map(track => (
-                  <span key={track.id} className="music-profile-track-tag">
-                    {track.name} - {track.artists}
-                  </span>
-                ))}
-              </div>
+
+              {tracks && tracks.length > 0 && (
+                <>
+                  <p className="music-profile-genres-label">Músicas selecionadas:</p>
+                  <div className="music-profile-tracks">
+                    {tracks.map(track => (
+                      <span key={track.id} className="music-profile-track-tag">
+                        {track.name || track.track_name}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
 
               {genres_found && genres_found.length > 0 && (
                 <>
@@ -255,10 +270,12 @@ function MusicResultsPage({ recommendations, profile, onBack }) {
           {renderCategory("Jóias Escondidas", hidden_gems)}
           {selected_genre && renderCategory(`Melhores de ${selected_genre}`, genre_favorites)}
 
-          <motion.button 
-            className="music-back-button" 
-            onClick={onBack} 
+          <motion.button
+            className="music-back-button"
+            onClick={onBack}
             variants={itemVariants}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             data-testid="back-to-discover-btn"
           >
             Fazer Nova Recomendação

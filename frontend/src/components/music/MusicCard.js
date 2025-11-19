@@ -1,181 +1,218 @@
-// frontend/src/components/music/MusicCard.js (v3.0 - Minimal Clean Design)
-import React from 'react';
+// frontend/src/components/music/MusicCard.js (v4.0 - Com Similarity Score)
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 const CardStyles = () => (
   <style>{`
-    .music-card-minimal {
+    .music-card {
       position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       transition: all 0.3s ease;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     }
 
-    .music-card-minimal:hover {
+    .music-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      border-color: rgba(13, 122, 63, 0.4);
+      box-shadow: 0 8px 24px rgba(13, 122, 63, 0.2);
+    }
+
+    .music-card.selected {
+      border-color: #0d7a3f;
+      box-shadow: 0 0 0 2px rgba(13, 122, 63, 0.3);
+      background-color: rgba(13, 122, 63, 0.08);
+    }
+
+    .music-card-image-container {
+      position: relative;
+      width: 100%;
+      padding-top: 100%;
+      background-color: rgba(0, 0, 0, 0.3);
+      overflow: hidden;
     }
 
     .music-card-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.5s ease;
-    }
-
-    .music-card-minimal:hover .music-card-image {
-      transform: scale(1.05);
-    }
-
-    .music-card-overlay {
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(
-        to top,
-        rgba(10, 10, 10, 0.95) 0%,
-        rgba(10, 10, 10, 0.6) 50%,
-        transparent 100%
-      );
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .music-card-placeholder {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      background: linear-gradient(135deg, rgba(13, 122, 63, 0.2), rgba(10, 92, 48, 0.2));
+    }
+
+    /* SIMILARITY BADGE - IGUAL AO DE FILMES */
+    .music-similarity-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: linear-gradient(135deg, rgba(13, 122, 63, 0.95), rgba(10, 92, 48, 0.95));
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 6px 12px;
+      border-radius: 50px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+      letter-spacing: 0.5px;
+    }
+
+    .music-card-content {
+      padding: 1rem;
+      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      padding: 1.5rem;
-      opacity: 0;
-      transition: opacity 0.3s ease;
     }
 
-    .music-card-minimal:hover .music-card-overlay {
-      opacity: 1;
-    }
-
-    .music-card-title {
+    .music-card-name {
       font-size: 1rem;
       font-weight: 600;
       color: #f5f5f5;
-      margin: 0 0 0.25rem 0;
-      letter-spacing: 0.3px;
+      margin: 0 0 0.5rem 0;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
     .music-card-artist {
       font-size: 0.85rem;
-      font-weight: 400;
       color: #a0a0a0;
       margin: 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
       overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .music-card-score {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background-color: rgba(10, 10, 10, 0.8);
-      backdrop-filter: blur(8px);
-      color: #f5f5f5;
-      padding: 0.4rem 0.75rem;
+    .music-card-genre {
+      font-size: 0.75rem;
+      color: #0d7a3f;
+      margin-top: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      background-color: rgba(13, 122, 63, 0.1);
+      border: 1px solid rgba(13, 122, 63, 0.3);
       border-radius: 50px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: inline-block;
+      align-self: flex-start;
+      margin-top: auto;
     }
 
-    .music-card-selected {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border: 3px solid #0d7a3f;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(13, 122, 63, 0.6), inset 0 0 20px rgba(13, 122, 63, 0.2);
-      pointer-events: none;
-    }
-
-    .music-card-checkmark {
+    .music-card-selected-indicator {
       position: absolute;
       top: 12px;
       left: 12px;
-      background-color: #0d7a3f;
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
+      background: linear-gradient(135deg, #0d7a3f, #0a5c30);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(13, 122, 63, 0.5);
-    }
-
-    .music-card-checkmark svg {
-      width: 18px;
-      height: 18px;
-      fill: #f5f5f5;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
   `}</style>
 );
 
 function MusicCard({ track, onClick, isSelected }) {
-  const score = track.similarity_score 
-    ? `${Math.round(track.similarity_score)}%` 
-    : track.penalized_score 
-    ? `${Math.round(track.penalized_score)}%` 
-    : null;
+  const [imageUrl, setImageUrl] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Buscar imagem do Spotify se necessário
+    const fetchImage = async () => {
+      if (!track.id || imageUrl) return;
+
+      setIsLoading(true);
+      try {
+        const response = await axios.post('/api/music/get-track-details', {
+          track_ids: [track.id]
+        });
+
+        if (response.data && response.data[track.id]) {
+          setImageUrl(response.data[track.id].image_url);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar imagem:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchImage();
+  }, [track.id, imageUrl]);
+
+  const name = track.name || track.track_name || 'Sem título';
+  const artist = track.artists || track.artist_name || 'Artista desconhecido';
+  const genre = track.track_genre || track.genres || '';
 
   return (
     <>
       <CardStyles />
       <motion.div
-        className="music-card-minimal"
+        className={`music-card ${isSelected ? 'selected' : ''}`}
         onClick={onClick}
-        whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        data-testid={`music-card-${track.id}`}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        data-testid="music-card"
       >
-        <img src={track.image_url} alt={track.name} className="music-card-image" />
-        
-        <div className="music-card-overlay">
-          <h3 className="music-card-title">{track.name}</h3>
-          <p className="music-card-artist">{track.artists}</p>
+        <div className="music-card-image-container">
+          {/* SIMILARITY BADGE - IGUAL AO DE FILMES */}
+          {track.similarity_score && (
+            <div className="music-similarity-badge">
+              {track.similarity_score}%
+            </div>
+          )}
+
+          {isSelected && (
+            <div className="music-card-selected-indicator">
+              ✓
+            </div>
+          )}
+
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={name}
+              className="music-card-image"
+              loading="lazy"
+            />
+          ) : (
+            <div className="music-card-placeholder">
+              {isLoading ? '⏳' : '🎵'}
+            </div>
+          )}
         </div>
 
-        {score && <div className="music-card-score">{score}</div>}
-
-        {isSelected && (
-          <>
-            <motion.div
-              className="music-card-selected"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            />
-            <motion.div
-              className="music-card-checkmark"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            >
-              <svg viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-              </svg>
-            </motion.div>
-          </>
-        )}
+        <div className="music-card-content">
+          <h3 className="music-card-name">{name}</h3>
+          <p className="music-card-artist">{artist}</p>
+          {genre && <span className="music-card-genre">{genre}</span>}
+        </div>
       </motion.div>
     </>
   );
