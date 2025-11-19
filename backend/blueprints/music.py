@@ -1,18 +1,20 @@
-# backend/blueprints/music.py (v5.0 - Autossuficiente)
-import os
-import json
-import pickle
-import traceback
-import time
-import base64
-from collections import defaultdict
-import numpy as np
+# backend/music/app.py (v13.4 - Correção np.matrix)
 import pandas as pd
-import requests
-from flask import Blueprint, request, jsonify
+import numpy as np
+import pickle
 from sklearn.metrics.pairwise import cosine_similarity
+# --- MUDANÇA 1: Importar Blueprint e Flask ---
+from flask import Flask, Blueprint, request, jsonify
+import json
+import os
+import traceback
+import requests
+import base64
+import time
+from collections import defaultdict
 
-# --- Lógica do Spotify (agora dentro do blueprint) ---
+# --- SEU CÓDIGO EXISTENTE (QUASE INTACTO) ---
+
 SPOTIFY_CLIENT_ID = "6b5cdcb34b384ce795186aae26220918"
 SPOTIFY_CLIENT_SECRET = "bd24ed38cfbd46b0ba1243132a1a7c38"
 
@@ -20,8 +22,8 @@ class SpotifyTokenManager:
     def __init__(self, client_id, client_secret):
         self.client_id = client_id
         self.client_secret = client_secret
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        CACHE_DIR = os.path.join(base_dir, '..', 'music', 'cache')
+        base_dir = os.path.dirname(__file__)
+        CACHE_DIR = os.path.join(base_dir, 'cache')
         self.token_cache_file = os.path.join(CACHE_DIR, '.spotify_token_cache')
         self.token_info = self._load_token_from_cache()
 
@@ -40,7 +42,7 @@ class SpotifyTokenManager:
         if self.token_info and time.time() < self.token_info.get('expires_at', 0):
             return self.token_info['access_token']
         auth_url = 'https://accounts.spotify.com/api/token'
-        auth_header = base64.b64encode(f"{self.client_id}:{self.client_secret}".encode( )).decode()
+        auth_header = base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()
         auth_data = {'grant_type': 'client_credentials'}
         try:
             res = requests.post(auth_url, headers={'Authorization': f'Basic {auth_header}'}, data=auth_data, timeout=10)
@@ -54,16 +56,14 @@ class SpotifyTokenManager:
 
 spotify_token_manager = SpotifyTokenManager(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
 
-# --- Classe MusicRecommender ---
 class MusicRecommender:
     def __init__(self):
         self.df_music = None; self.feature_matrix = None; self.all_genres = []
         self.is_ready = False
         try:
-            print("Carregando cache de músicas (v5.0)...")
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            CACHE_DIR = os.path.join(base_dir, '..', 'music', 'cache')
-
+            print("Carregando cache de músicas (v13.3)...")
+            base_dir = os.path.dirname(__file__)
+            CACHE_DIR = os.path.join(base_dir, 'cache')
             self.df_music = pd.read_parquet(os.path.join(CACHE_DIR, 'music_processed.parquet'))
             with open(os.path.join(CACHE_DIR, 'music_feature_matrix.pkl'), 'rb') as f: self.feature_matrix = pickle.load(f)
             with open(os.path.join(CACHE_DIR, 'music_genres.json'), 'r', encoding='utf-8') as f: self.all_genres = json.load(f)
@@ -71,7 +71,6 @@ class MusicRecommender:
             print(f">>> Sistema de músicas pronto. {len(self.df_music)} faixas carregadas. <<<")
         except Exception as e:
             print(f"\n--- ERRO CRÍTICO AO CARREGAR CACHE DE MÚSICAS: {e} ---")
-            traceback.print_exc()
 
     def search_tracks(self, query, limit=30):
         if not self.is_ready or not query: return []
@@ -79,128 +78,121 @@ class MusicRecommender:
         results_df = self.df_music[search_series.str.contains(query, case=False, na=False)]
         return results_df.head(limit).to_dict('records')
 
-    def get_recommendations(self, selected_track_ids, top_n_per_item=20):
+    def get_recommendations(self, selected_track_ids, genre_to_explore=None, top_n_per_item=20):
         if not self.is_ready or not selected_track_ids: return pd.DataFrame()
-        all_recs_dfs = []
         selected_indices = self.df_music.index[self.df_music['id'].isin(selected_track_ids)].tolist()
         if not selected_indices: return pd.DataFrame()
-        for track_index in selected_indices:
-            track_vector = self.feature_matrix[track_index]
-            similarities = cosine_similarity(track_vector, self.feature_matrix).flatten()
-            recs_for_item = self.df_music.copy()
-            recs_for_item['similarity'] = similarities
-            recs_for_item = recs_for_item[~recs_for_item['id'].isin(selected_track_ids)]
-            top_recs = recs_for_item.nlargest(top_n_per_item, 'similarity')
-            all_recs_dfs.append(top_recs)
-        if not all_recs_dfs: return pd.DataFrame()
-        combined_recs_df = pd.concat(all_recs_dfs).reset_index(drop=True)
-        combined_recs_df = combined_recs_df.sort_values('similarity', ascending=False).drop_duplicates(subset=['id'])
-        combined_recs_df['similarity'] = combined_recs_df['similarity'] ** 4
+        
+        # Converter feature_matrix para array se for matrix
+        feature_matrix_array = np.asarray(self.feature_matrix)
+        
+        profile_vector = np.mean(feature_matrix_array[selected_indices], axis=0)
+        profile_vector = np.asarray(profile_vector).reshape(1, -1)
+        
+        similarities = cosine_similarity(profile_vector, feature_matrix_array).flatten()
+        recs_df = self.df_music.copy()
+        recs_df['similarity'] = similarities
+        recs_df = recs_df[~recs_df['id'].isin(selected_track_ids)]
+        if genre_to_explore:
+            genre_mask = recs_df['genres'].astype(str).str.contains(genre_to_explore, case=False, na=False)
+            recs_df.loc[genre_mask, 'similarity'] *= 1.25
         artist_penalty_factor = 0.85
         artist_counts = defaultdict(int)
         penalized_scores = []
-        final_df = combined_recs_df.sort_values('similarity', ascending=False)
+        final_df = recs_df.sort_values('similarity', ascending=False)
+        input_artists = self.df_music.loc[selected_indices, 'artists'].unique()
         for _, row in final_df.iterrows():
             artist = row['artists']
-            penalty = artist_penalty_factor ** artist_counts[artist]
+            penalty = 1.0
+            penalty *= artist_penalty_factor ** artist_counts[artist]
+            if artist in input_artists: penalty *= 0.5
             penalized_scores.append(row['similarity'] * penalty)
             artist_counts[artist] += 1
-        final_df['penalized_score'] = penalized_scores
-        return final_df.sort_values('penalized_score', ascending=False)
+        final_df['final_score'] = penalized_scores
+        return final_df.sort_values('final_score', ascending=False)
 
     def discover_tracks(self):
         if not self.is_ready: return {}, {}
         iconic_artists = ['Arctic Monkeys', 'Billie Eilish', 'The Weeknd', 'Daft Punk', 'Queen', 'Kendrick Lamar', 'Tame Impala', 'Radiohead', 'Red Hot Chili Peppers', 'Foo Fighters']
         iconic_tracks = self.df_music[self.df_music['artists'].isin(iconic_artists)]
         iconic_tracks = iconic_tracks.loc[iconic_tracks.groupby('artists')['popularity'].idxmax()]
-        explore_df = self.df_music[(self.df_music['popularity'].between(60, 80)) & (~self.df_music['genres'].isin(['pop', 'dance', 'rock', 'hip-hop', 'latin']))].sample(n=15, random_state=42)
+        explore_df = self.df_music[(self.df_music['popularity'].between(60, 80)) & (~self.df_music['genres'].str.contains('pop|dance|rock|hip hop|latin', na=False))].sample(n=15, random_state=42)
         return iconic_tracks.to_dict('records'), explore_df.to_dict('records')
 
-# --- Instanciação e Rotas ---
-recommender_music = MusicRecommender()
-music_bp = Blueprint('music_bp', __name__)
+# --- MUDANÇA 2: Criação do Blueprint e das Rotas ---
+
+recommender = MusicRecommender()
+music_bp = Blueprint('music_bp', __name__, url_prefix='/api/music')
+
+@music_bp.route('/discover', methods=['GET'])
+def discover():
+    if not recommender.is_ready: return jsonify({"error": "Serviço de música indisponível"}), 503
+    iconic, explore = recommender.discover_tracks()
+    return jsonify({"iconic_tracks": iconic, "explore_tracks": explore})
+
+@music_bp.route('/search', methods=['GET'])
+def search():
+    if not recommender.is_ready: return jsonify({"error": "Serviço de música indisponível"}), 503
+    query = request.args.get('q', '')
+    results = recommender.search_tracks(query)
+    return jsonify(results)
 
 @music_bp.route('/genres', methods=['GET'])
 def get_genres():
-    if not recommender_music.is_ready: return jsonify({"error": "Sistema de músicas não pronto"}), 503
-    return jsonify(recommender_music.all_genres)
-
-@music_bp.route('/discover', methods=['GET'])
-def discover_tracks_api():
-    if not recommender_music.is_ready: return jsonify({"error": "Sistema não pronto"}), 503
-    iconic_tracks_json, explore_tracks_json = recommender_music.discover_tracks()
-    return jsonify({"iconic_tracks": iconic_tracks_json, "explore_tracks": explore_tracks_json})
-
-@music_bp.route('/search', methods=['GET'])
-def search_music_api():
-    query = request.args.get('q', '')
-    if not recommender_music.is_ready: return jsonify([])
-    return jsonify(recommender_music.search_tracks(query))
-
-@music_bp.route('/recommend', methods=['POST'])
-def recommend_music_api():
-    if not recommender_music.is_ready: return jsonify({"error": "Sistema não pronto"}), 503
-    data = request.get_json()
-    if not data: return jsonify({"error": "Corpo da requisição JSON ausente"}), 400
-    selected_ids = data.get('track_ids')
-    selected_genre_to_explore = data.get('genre') or None
-    if not selected_ids or not isinstance(selected_ids, list) or len(selected_ids) < 3:
-        return jsonify({"error": "A lista 'track_ids' deve conter pelo menos 3 IDs"}), 400
-    recs_df = recommender_music.get_recommendations(selected_ids)
-    profile_df = recommender_music.df_music[recommender_music.df_music['id'].isin(selected_ids)]
-    profile_all_genres = sorted(profile_df['genres'].unique().tolist())
-    dominant_genre = profile_df['genres'].mode()[0] if not profile_df['genres'].mode().empty else None
-    used_ids = set(selected_ids)
-    def get_unique_recs(df, num_recs):
-        nonlocal used_ids
-        if df.empty: return []
-        unique_df = df[~df['id'].isin(used_ids)].head(num_recs)
-        used_ids.update(unique_df['id'].tolist())
-        return unique_df.to_dict('records')
-    recommendations = {}
-    recommendations["Recomendações Principais"] = get_unique_recs(recs_df, 12)
-    if selected_genre_to_explore:
-        explore_recs_df = recs_df[recs_df['genres'] == selected_genre_to_explore]
-        recommendations[f"Explorando {selected_genre_to_explore.title()}"] = get_unique_recs(explore_recs_df, 6)
-    if dominant_genre and dominant_genre != selected_genre_to_explore:
-        dominant_genre_recs_df = recs_df[recs_df['genres'] == dominant_genre]
-        recommendations[f"Com Base no seu Gosto em {dominant_genre.title()}"] = get_unique_recs(dominant_genre_recs_df, 6)
-    hidden_gems_df = recs_df[recs_df['popularity'] < 50]
-    recommendations["Joias Escondidas para Você"] = get_unique_recs(hidden_gems_df, 6)
-    max_score = recs_df['penalized_score'].max() if not recs_df.empty else 1.0
-    for category in recommendations:
-        for rec in recommendations[category]:
-            score = rec.get('penalized_score', 0)
-            normalized_score = (score / max_score) * 100 if max_score > 0 else 0
-            rec['similarity_score'] = f"{min(normalized_score, 100.0):.1f}"
-    profile_data = {"tracks": profile_df[['name', 'artists']].to_dict('records'), "dominant_genre": dominant_genre, "all_genres": profile_all_genres}
-    return jsonify({
-        "recommendations": recommendations,
-        "profile": profile_data,
-        "selected_genre": selected_genre_to_explore
-    })
+    if not recommender.is_ready: return jsonify({"error": "Serviço de música indisponível"}), 503
+    return jsonify(recommender.all_genres)
 
 @music_bp.route('/get-track-details', methods=['POST'])
-def get_track_details_api():
-    track_ids = request.json.get('track_ids')
-    if not track_ids: return jsonify({}), 400
+def get_track_details():
+    if not recommender.is_ready: return jsonify({"error": "Serviço de música indisponível"}), 503
+    data = request.get_json()
+    track_ids = data.get('track_ids', [])
+    if not track_ids: return jsonify({}), 200
     token = spotify_token_manager.get_token()
-    if not token: return jsonify({'error': 'Falha na autenticação com o Spotify'}), 500
-    headers = {'Authorization': f'Bearer {token}'}
-    ids_str = ','.join(list(set(track_ids))[:50])
-    url = f'https://api.spotify.com/v1/tracks?ids={ids_str}'
+    if not token: return jsonify({"error": "Falha na autenticação com Spotify"}), 500
+    url = f"https://api.spotify.com/v1/tracks?ids={','.join(track_ids)}"
+    headers = {"Authorization": f"Bearer {token}"}
     try:
-        res = requests.get(url, headers=headers, timeout=10  )
-        res.raise_for_status()
-        tracks_data = res.json().get('tracks', [])
-        results = {}
-        for track in tracks_data:
-            if track:
-                results[track['id']] = {
-                    'image_url': track['album']['images'][0]['url'] if track.get('album') and track['album'].get('images') else None,
-                    'preview_url': track.get('preview_url')
-                }
-        return jsonify(results)
-    except requests.exceptions.RequestException as e:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        spotify_data = response.json()
+        details = {}
+        for track in spotify_data.get('tracks', []):
+            if track and track.get('album') and track['album']['images']:
+                details[track['id']] = {"image_url": track['album']['images'][0]['url'], "preview_url": track.get('preview_url')}
+        return jsonify(details)
+    except Exception as e:
         print(f"Erro ao buscar detalhes no Spotify: {e}")
-        return jsonify({'error': str(e)}), 502
+        return jsonify({"error": "Falha ao comunicar com a API do Spotify"}), 502
+
+@music_bp.route('/recommend', methods=['POST'])
+def recommend():
+    try:
+        if not recommender.is_ready: return jsonify({"error": "Serviço de música indisponível"}), 503
+        data = request.get_json()
+        track_ids = data.get('track_ids')
+        genre = data.get('genre', None)
+        if not track_ids or len(track_ids) < 3: return jsonify({"error": "São necessárias pelo menos 3 músicas."}), 400
+        recs_df = recommender.get_recommendations(track_ids, genre_to_explore=genre)
+        if recs_df.empty: return jsonify({"recommendations": {}, "profile": {}})
+        main_recs = recs_df.head(8)
+        hidden_gems = recs_df[recs_df['popularity'] < 50].head(8)
+        high_energy = recs_df[recs_df['energy'] > 0.8].head(8)
+        recommendations = {"main": main_recs.to_dict('records'), "hidden_gems": hidden_gems.to_dict('records'), "high_energy": high_energy.to_dict('records')}
+        if genre:
+            genre_recs = recs_df[recs_df['genres'].astype(str).str.contains(genre, case=False, na=False)].head(8)
+            recommendations["genre_favorites"] = genre_recs.to_dict('records')
+        profile_df = recommender.df_music[recommender.df_music['id'].isin(track_ids)]
+        favorite_genre = profile_df['genres'].str.split(', ').explode().mode()
+        profile = {"tracks": profile_df[['id', 'name']].to_dict('records'), "favorite_genre": favorite_genre[0] if not favorite_genre.empty else "Variado"}
+        return jsonify({"recommendations": recommendations, "profile": profile, "selected_genre": genre})
+    except Exception as e:
+        print(f"\n--- ERRO NA ROTA /api/music/recommend ---\n{traceback.format_exc()}\n-----------------------------------------\n")
+        return jsonify({"error": "Ocorreu um erro interno no servidor."}), 500
+
+# --- MUDANÇA 3: Inicializador para Execução Direta ---
+def create_app():
+    app = Flask(__name__)
+    app.register_blueprint(music_bp)
+    return app
+app = create_app()

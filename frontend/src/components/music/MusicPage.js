@@ -240,8 +240,8 @@ function MusicPage() {
       axios.get('/api/music/discover'),
       axios.get('/api/music/genres')
     ]).then(([discoverRes, genresRes]) => {
-      fetchTrackDetails(discoverRes.data.iconic_tracks, setIconicTracks);
-      fetchTrackDetails(discoverRes.data.explore_tracks, setExploreTracks);
+      fetchTrackDetails(discoverRes.data.iconic, setIconicTracks);  // ← CORRIGIDO
+      fetchTrackDetails(discoverRes.data.explore, setExploreTracks);  // ← CORRIGIDO
       setGenres(genresRes.data || []);
       setIsDiscoverLoading(false);
     }).catch(error => {
