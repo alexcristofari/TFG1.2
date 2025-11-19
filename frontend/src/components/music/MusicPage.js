@@ -1,4 +1,4 @@
-// frontend/src/components/music/MusicPage.js (v5.0 - Performance Optimized + Ultra Minimal)
+// frontend/src/components/music/MusicPage.js (v5.1 - Ajustes de Layout e Paginação)
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,7 +42,7 @@ const PageStyles = () => (
       min-height: 100vh;
       background-color: #0a0a0a;
       color: #f5f5f5;
-      padding: 2rem 2rem 4rem 2rem;
+      padding: 1rem 2rem 4rem 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -53,24 +53,12 @@ const PageStyles = () => (
       width: 100%;
     }
 
-    .music-minimal-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .music-minimal-title {
-      font-size: 2.5rem;
-      font-weight: 600;
-      color: #0d7a3f;
-      letter-spacing: 0;
-      line-height: 1;
-    }
-
     .music-top-controls {
       display: flex;
       gap: 1rem;
       align-items: center;
       margin-bottom: 1.5rem;
+      margin-top: 4.5rem;
       flex-wrap: wrap;
     }
 
@@ -195,7 +183,7 @@ const PageStyles = () => (
     }
 
     .music-section {
-      margin: 2rem auto 0 auto;
+      margin: 3rem auto 0 auto;
     }
 
     .music-grid {
@@ -330,14 +318,22 @@ function MusicPage() {
 
   const TRACKS_PER_PAGE = 12; // 6 colunas x 2 linhas
 
-  // Combina iconic e explore
+  // Prioriza músicas icônicas (pop/conhecidas) e filtra latinas
   const allTracks = useMemo(() => {
-    const combined = [...iconicTracks, ...exploreTracks];
-    const unique = combined.filter(
+    // Usar APENAS iconic tracks (músicas populares/conhecidas)
+    let primary = iconicTracks;
+    
+    // Filtrar músicas latinas e menos conhecidas
+    primary = primary.filter(track => {
+      const genre = (track.genres || track.track_genre || '').toLowerCase();
+      return !genre.includes('latin') && !genre.includes('reggaeton') && !genre.includes('samba');
+    });
+    
+    const unique = primary.filter(
       (track, index, self) => index === self.findIndex((t) => t.id === track.id)
     );
-    return unique.slice(0, 60); // Mais músicas para evitar repetição
-  }, [iconicTracks, exploreTracks]);
+    return unique.slice(0, 60);
+  }, [iconicTracks]);
 
   const totalPages = Math.ceil(allTracks.length / TRACKS_PER_PAGE);
   const currentTracks = allTracks.slice(
@@ -409,6 +405,13 @@ function MusicPage() {
       setIsDiscoverLoading(false);
     });
   }, [fetchTrackDetailsBatch]);
+
+  // ===== FIX: Ajustar página apenas quando totalPages mudar =====
+  useEffect(() => {
+    if (currentPage >= totalPages && totalPages > 0) {
+      setCurrentPage(Math.max(0, totalPages - 1));
+    }
+  }, [totalPages]);
 
   // ===== BUSCA COM DEBOUNCE =====
   const debouncedSearch = useMemo(() => {
@@ -518,15 +521,6 @@ function MusicPage() {
       <PageStyles />
       <div className="music-minimal-container">
         <div className="music-minimal-content">
-          <motion.header
-            className="music-minimal-header"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="music-minimal-title">Músicas</h1>
-          </motion.header>
-
           {/* BARRA DE CONTROLES COMPACTA */}
           <div className="music-top-controls">
             <div className="music-search-box">

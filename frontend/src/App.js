@@ -18,31 +18,32 @@ function AppContent() {
   // Pega o estado de loading e o status do Contexto Global
   const { isLoading, loadingStatus } = useData();
 
-  // Estilos do botão de voltar
+  // Estilos do botão de voltar (PRETO MINIMALISTA)
   const backButtonStyle = {
     position: 'fixed',
     top: '20px',
     left: '20px',
     zIndex: 1000,
-    backgroundColor: 'rgba(42, 71, 94, 0.8)',
+    backgroundColor: 'rgba(20, 20, 20, 0.85)',
     backdropFilter: 'blur(5px)',
-    color: '#c7d5e0',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    color: '#e0e0e0',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
     borderRadius: '50px',
-    padding: '10px 20px',
+    padding: '8px 16px',
     cursor: 'pointer',
-    fontWeight: 'bold',
-    transition: 'background-color 0.2s, color 0.2s'
+    fontWeight: '500',
+    fontSize: '0.9rem',
+    transition: 'all 0.2s ease'
   };
 
   const handleMouseOver = (e) => {
-    e.currentTarget.style.backgroundColor = 'rgba(102, 192, 244, 0.8)';
-    e.currentTarget.style.color = '#fff';
+    e.currentTarget.style.backgroundColor = 'rgba(60, 60, 60, 0.9)';
+    e.currentTarget.style.color = '#ffffff';
   };
 
   const handleMouseOut = (e) => {
-    e.currentTarget.style.backgroundColor = 'rgba(42, 71, 94, 0.8)';
-    e.currentTarget.style.color = '#c7d5e0';
+    e.currentTarget.style.backgroundColor = 'rgba(20, 20, 20, 0.85)';
+    e.currentTarget.style.color = '#e0e0e0';
   };
 
   const renderBackButton = () => (
