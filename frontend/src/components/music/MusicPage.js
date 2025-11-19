@@ -1,14 +1,13 @@
-// frontend/src/components/music/MusicPage.js (v5.1 - Ajustes de Layout e Paginação)
+// frontend/src/components/music/MusicPage.js (v5.3 - Mais músicas pop)
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import MusicCard from './MusicCard';
-import MusicSelector from './MusicSelector';
 import MusicResultsPage from './MusicResultsPage';
 
-// ===== CACHE DE IMAGENS DO SPOTIFY =====
+// ===== CACHE DE IMAGENS =====
 const CACHE_KEY = 'spotify_images_cache';
-const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 dias
+const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000;
 
 const getImageCache = () => {
   try {
@@ -316,23 +315,33 @@ function MusicPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [imageCache, setImageCache] = useState(getImageCache());
 
-  const TRACKS_PER_PAGE = 12; // 6 colunas x 2 linhas
+  const TRACKS_PER_PAGE = 18; // Aumentado de 12 para 18 (6x3)
 
-  // Prioriza músicas icônicas (pop/conhecidas) e filtra latinas
+  // Prioriza músicas populares (pop, rock, hip-hop)
   const allTracks = useMemo(() => {
-    // Usar APENAS iconic tracks (músicas populares/conhecidas)
     let primary = iconicTracks;
     
-    // Filtrar músicas latinas e menos conhecidas
+    // Filtrar apenas gêneros populares e conhecidos
     primary = primary.filter(track => {
       const genre = (track.genres || track.track_genre || '').toLowerCase();
-      return !genre.includes('latin') && !genre.includes('reggaeton') && !genre.includes('samba');
+      // Manter: pop, rock, hip-hop, indie, eletrônica, dance
+      // Remover: latin, reggaeton, samba, world, folk
+      return !genre.includes('latin') && 
+             !genre.includes('reggaeton') && 
+             !genre.includes('samba') &&
+             !genre.includes('world') &&
+             !genre.includes('folk') &&
+             !genre.includes('country');
     });
+    
+    // Ordenar por popularidade (maior primeiro)
+    primary.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
     
     const unique = primary.filter(
       (track, index, self) => index === self.findIndex((t) => t.id === track.id)
     );
-    return unique.slice(0, 60);
+    
+    return unique.slice(0, 120); // Aumentado de 60 para 120
   }, [iconicTracks]);
 
   const totalPages = Math.ceil(allTracks.length / TRACKS_PER_PAGE);
@@ -341,15 +350,12 @@ function MusicPage() {
     (currentPage + 1) * TRACKS_PER_PAGE
   );
 
-  // ===== BATCH FETCH DE IMAGENS =====
   const fetchTrackDetailsBatch = useCallback(async (tracks) => {
     if (!tracks || tracks.length === 0) return [];
 
-    // Filtra quais precisam buscar (não estão no cache)
     const tracksNeedingFetch = tracks.filter(t => !imageCache[t.id]);
     
     if (tracksNeedingFetch.length === 0) {
-      // Todas já estão no cache
       return tracks.map(t => ({
         ...t,
         image_url: imageCache[t.id]?.image_url,
@@ -361,7 +367,6 @@ function MusicPage() {
       const trackIds = tracksNeedingFetch.map(t => t.id);
       const response = await axios.post('/api/music/get-track-details', { track_ids: trackIds });
       
-      // Atualiza cache
       const newCache = { ...imageCache };
       Object.keys(response.data).forEach(id => {
         newCache[id] = response.data[id];
@@ -369,7 +374,6 @@ function MusicPage() {
       setImageCache(newCache);
       saveImageCache(newCache);
 
-      // Retorna tracks enriquecidas
       return tracks.map(track => ({
         ...track,
         image_url: newCache[track.id]?.image_url || imageCache[track.id]?.image_url,
@@ -381,7 +385,6 @@ function MusicPage() {
     }
   }, [imageCache]);
 
-  // ===== CARREGAMENTO INICIAL =====
   useEffect(() => {
     Promise.all([
       axios.get('/api/music/discover'),
@@ -390,7 +393,6 @@ function MusicPage() {
       const iconic = discoverRes.data.iconic || [];
       const explore = discoverRes.data.explore || [];
 
-      // BATCH: Busca todas as imagens de uma vez
       const [enrichedIconic, enrichedExplore] = await Promise.all([
         fetchTrackDetailsBatch(iconic),
         fetchTrackDetailsBatch(explore)
@@ -406,14 +408,12 @@ function MusicPage() {
     });
   }, [fetchTrackDetailsBatch]);
 
-  // ===== FIX: Ajustar página apenas quando totalPages mudar =====
   useEffect(() => {
     if (currentPage >= totalPages && totalPages > 0) {
       setCurrentPage(Math.max(0, totalPages - 1));
     }
   }, [totalPages]);
 
-  // ===== BUSCA COM DEBOUNCE =====
   const debouncedSearch = useMemo(() => {
     let timer;
     return (query) => {
@@ -461,7 +461,6 @@ function MusicPage() {
       const allRecs = Object.values(response.data.recommendations).flat();
       const enriched = await fetchTrackDetailsBatch(allRecs);
 
-      // Reconstrói por categoria
       const enrichedRecs = {};
       Object.keys(response.data.recommendations).forEach(category => {
         enrichedRecs[category] = response.data.recommendations[category].map(track => {
@@ -511,6 +510,7 @@ function MusicPage() {
       <MusicResultsPage
         recommendations={recommendationResults.recommendations}
         profile={recommendationResults.profile}
+        selectedGenre={selectedGenre}
         onBack={handleReset}
       />
     );
@@ -521,7 +521,6 @@ function MusicPage() {
       <PageStyles />
       <div className="music-minimal-container">
         <div className="music-minimal-content">
-          {/* BARRA DE CONTROLES COMPACTA */}
           <div className="music-top-controls">
             <div className="music-search-box">
               <svg className="music-search-icon" viewBox="0 0 24 24">
@@ -556,7 +555,6 @@ function MusicPage() {
             </button>
           </div>
 
-          {/* CHIPS DE SELEÇÃO */}
           <AnimatePresence>
             {selectedTracks.length > 0 && (
               <motion.div
@@ -581,7 +579,6 @@ function MusicPage() {
             )}
           </AnimatePresence>
 
-          {/* GRID DE MÚSICAS */}
           <AnimatePresence mode="wait">
             <motion.section
               className="music-section"

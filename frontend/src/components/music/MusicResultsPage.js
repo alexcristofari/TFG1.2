@@ -1,4 +1,4 @@
-// frontend/src/components/music/MusicResultsPage.js (v4.0 - Igual ao de Filmes)
+// frontend/src/components/music/MusicResultsPage.js (v5.2 - Corrigido gênero selecionado)
 import React from 'react';
 import { motion } from 'framer-motion';
 import MusicCard from './MusicCard';
@@ -28,7 +28,7 @@ const PageStyles = () => (
     .music-results-title {
       font-size: 2.5rem;
       font-weight: 600;
-      color: #0d7a3f;
+      color: #f5f5f5;
       letter-spacing: -0.02em;
       margin-bottom: 1rem;
       line-height: 1.2;
@@ -109,8 +109,8 @@ const PageStyles = () => (
       letter-spacing: 0.3px;
     }
 
-    .music-category-section {
-      margin: 4rem 0;
+    .music-recommendation-section {
+      margin-bottom: 3rem;
     }
 
     .music-category-title {
@@ -186,14 +186,33 @@ const itemVariants = {
   visible: { y: 0, opacity: 1 },
 };
 
-function MusicResultsPage({ recommendations, profile, onBack }) {
-  const { main, hidden_gems, genre_favorites } = recommendations || {};
-  const { tracks, dominant_genre, selected_genre, genres_found } = profile || {};
+function MusicResultsPage({ recommendations, profile, selectedGenre, onBack }) {
+  const { main, hidden_gems } = recommendations || {};
+  const { tracks, dominant_genre, genres_found } = profile || {};
+
+  // Encontrar recomendações do gênero selecionado
+  const genreRecommendations = React.useMemo(() => {
+    if (!selectedGenre || !recommendations) return null;
+    
+    // Procurar por todas as chaves que contenham o gênero selecionado
+    const genreKeys = Object.keys(recommendations).filter(key => 
+      key.toLowerCase().includes(selectedGenre.toLowerCase())
+    );
+    
+    if (genreKeys.length > 0) {
+      // Combinar todas as recomendações do gênero
+      return genreKeys.reduce((acc, key) => {
+        return [...acc, ...(recommendations[key] || [])];
+      }, []);
+    }
+    
+    return null;
+  }, [recommendations, selectedGenre]);
 
   const renderCategory = (title, tracksList) => {
     if (!tracksList || tracksList.length === 0) return null;
     return (
-      <motion.section className="music-category-section" variants={itemVariants}>
+      <motion.section className="music-recommendation-section" variants={itemVariants}>
         <h2 className="music-category-title">{title}</h2>
         <div className="music-results-grid">
           {tracksList.map(track => (
@@ -257,9 +276,9 @@ function MusicResultsPage({ recommendations, profile, onBack }) {
                     Gênero Dominante: {dominant_genre}
                   </span>
                 )}
-                {selected_genre && (
+                {selectedGenre && (
                   <span className="music-profile-highlight">
-                    Explorando: {selected_genre}
+                    Explorando: {selectedGenre}
                   </span>
                 )}
               </div>
@@ -267,8 +286,12 @@ function MusicResultsPage({ recommendations, profile, onBack }) {
           )}
 
           {renderCategory("Recomendações Principais", main)}
+          
+          {selectedGenre && genreRecommendations && genreRecommendations.length > 0 && 
+            renderCategory(`Explorando ${selectedGenre}`, genreRecommendations)
+          }
+          
           {renderCategory("Jóias Escondidas", hidden_gems)}
-          {selected_genre && renderCategory(`Melhores de ${selected_genre}`, genre_favorites)}
 
           <motion.button
             className="music-back-button"
