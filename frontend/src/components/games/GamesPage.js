@@ -1,62 +1,40 @@
-// frontend/src/components/games/GamesPage.js (v4.0 - Minimal Clean Design)
+// frontend/src/components/games/GamesPage.js (v5.0 - Padrão Steam Minimalista)
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useData } from '../../context/DataContext';
 import GameCard from './GameCard';
-import GameSelector from './GameSelector';
 import ResultsPage from './ResultsPage';
 
 const PageStyles = () => (
   <style>{`
     .games-minimal-container {
       min-height: 100vh;
-      background-color: #0a0a0a;
+      background-color: #0a0e12;
       color: #f5f5f5;
-      padding: 4rem 2rem;
+      padding: 1rem 2rem 4rem 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
     .games-minimal-content {
-      max-width: 1200px;
+      max-width: 1400px;
       width: 100%;
     }
 
-    .games-minimal-header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-
-    .games-minimal-title {
-      font-size: 2.5rem;
-      font-weight: 600;
-      color: #2a475e;
-      letter-spacing: 0;
-      margin-bottom: 1rem;
-      line-height: 1;
-    }
-
-    .games-minimal-subtitle {
-      font-size: 0.95rem;
-      font-weight: 300;
-      color: #a0a0a0;
-      letter-spacing: 1.5px;
-      margin-top: 0.5rem;
-    }
-
-    .games-search-wrapper {
-      margin: 3rem auto;
+    .games-top-controls {
       display: flex;
-      justify-content: center;
-      max-width: 1000px;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      margin-top: 4.5rem;
+      flex-wrap: wrap;
     }
 
     .games-search-box {
       position: relative;
-      width: 100%;
-      max-width: 1000px;
+      flex: 2;
+      min-width: 300px;
     }
 
     .games-search-input {
@@ -64,8 +42,8 @@ const PageStyles = () => (
       background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #f5f5f5;
-      padding: 1rem 1rem 1rem 3rem;
-      font-size: 0.95rem;
+      padding: 0.85rem 0.85rem 0.85rem 2.5rem;
+      font-size: 0.9rem;
       border-radius: 50px;
       font-family: 'Inter', sans-serif;
       transition: all 0.3s ease;
@@ -73,8 +51,9 @@ const PageStyles = () => (
 
     .games-search-input:focus {
       background-color: rgba(255, 255, 255, 0.08);
-      border-color: #2a475e;
-      box-shadow: 0 0 0 3px rgba(42, 71, 94, 0.1);
+      border-color: #4a9fd8;
+      box-shadow: 0 0 0 3px rgba(74, 159, 216, 0.1);
+      outline: none;
     }
 
     .games-search-input::placeholder {
@@ -83,44 +62,125 @@ const PageStyles = () => (
 
     .games-search-icon {
       position: absolute;
-      left: 1rem;
+      left: 0.85rem;
       top: 50%;
       transform: translateY(-50%);
-      width: 1.2rem;
-      height: 1.2rem;
+      width: 1rem;
+      height: 1rem;
       fill: #a0a0a0;
     }
 
-    .games-section {
-      margin: 4rem auto;
-      max-width: 1000px;
+    .games-genre-select {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f5f5f5;
+      padding: 0.85rem 1.2rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+      min-width: 180px;
     }
 
-    .games-section-label {
-      font-size: 0.8rem;
+    .games-genre-select:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .games-genre-select:focus {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: #4a9fd8;
+      outline: none;
+    }
+
+    .games-genre-select option {
+      background-color: #15202d;
+      color: #f5f5f5;
+    }
+
+    .games-recommend-btn-compact {
+      background: linear-gradient(135deg, #4a9fd8, #1e3548);
+      border: 1px solid rgba(74, 159, 216, 0.5);
+      color: #f5f5f5;
+      padding: 0.85rem 2rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
       font-weight: 500;
-      color: #a0a0a0;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      margin-bottom: 2.5rem;
-      text-align: center;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .games-recommend-btn-compact:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(74, 159, 216, 0.3);
+    }
+
+    .games-recommend-btn-compact:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .games-selected-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      min-height: 2rem;
+    }
+
+    .games-chip {
+      background-color: rgba(74, 159, 216, 0.15);
+      border: 1px solid rgba(74, 159, 216, 0.4);
+      color: #f5f5f5;
+      padding: 0.4rem 1rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      transition: all 0.3s ease;
+    }
+
+    .games-chip:hover {
+      background-color: rgba(74, 159, 216, 0.25);
+      border-color: #4a9fd8;
+    }
+
+    .games-section {
+      margin: 3rem auto 0 auto;
     }
 
     .games-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
-      max-width: 1000px;
-      margin: 0 auto;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1400px) {
+      .games-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
 
     @media (max-width: 1024px) {
+      .games-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
       .games-grid {
         grid-template-columns: repeat(2, 1fr);
       }
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 480px) {
       .games-grid {
         grid-template-columns: 1fr;
       }
@@ -135,44 +195,53 @@ const PageStyles = () => (
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: #0a0a0a;
+      background-color: #0a0e12;
       z-index: 100;
-      flex-direction: column;
-      gap: 1rem;
     }
 
-    .games-loading-text {
-      color: #2a475e;
-      font-weight: 300;
-      font-size: 1.5rem;
-      letter-spacing: 1px;
+    .games-loading-dots {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .games-loading-dot {
+      width: 12px;
+      height: 12px;
+      background-color: #4a9fd8;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .games-loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .games-loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
     }
 
     .games-pagination {
       display: flex;
       justify-content: center;
       gap: 1rem;
-      margin-top: 3rem;
-      max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
+      margin-top: 2rem;
     }
 
     .games-page-btn {
       background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #f5f5f5;
-      padding: 0.75rem 1.5rem;
+      padding: 0.65rem 1.3rem;
       border-radius: 50px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-family: 'Inter', sans-serif;
       transition: all 0.3s ease;
     }
 
     .games-page-btn:hover:not(:disabled) {
-      background-color: rgba(42, 71, 94, 0.2);
-      border-color: #2a475e;
+      background-color: rgba(74, 159, 216, 0.2);
+      border-color: #4a9fd8;
       transform: translateY(-2px);
     }
 
@@ -185,45 +254,47 @@ const PageStyles = () => (
       display: flex;
       align-items: center;
       color: #a0a0a0;
-      font-size: 0.9rem;
-      padding: 0 1rem;
+      font-size: 0.85rem;
+      padding: 0 0.8rem;
     }
   `}</style>
 );
 
-const LoadingScreen = ({ text }) => (
-  <motion.div
-    className="games-loading-screen"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-  >
-    <h1 className="games-loading-text">{text}</h1>
-  </motion.div>
+const LoadingScreen = () => (
+  <div className="games-loading-screen">
+    <div className="games-loading-dots">
+      <div className="games-loading-dot"></div>
+      <div className="games-loading-dot"></div>
+      <div className="games-loading-dot"></div>
+    </div>
+  </div>
 );
 
 function GamesPage() {
-  const { gamesData, isLoading: isGlobalLoading, loadingStatus } = useData();
   const [view, setView] = useState('discover');
   const [recommendationResults, setRecommendationResults] = useState(null);
   const [isRecommendLoading, setIsRecommendLoading] = useState(false);
+  const [isDiscoverLoading, setIsDiscoverLoading] = useState(true);
+  const [iconicGames, setIconicGames] = useState([]);
+  const [exploreGames, setExploreGames] = useState([]);
+  const [genres, setGenres] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGames, setSelectedGames] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
 
-  const GAMES_PER_PAGE = 6;
+  const GAMES_PER_PAGE = 18; // 6x3 grid
 
-  // Combina iconic e explore para ter ~40 jogos
+  // Combina iconic e explore para ter mais jogos
   const allGames = useMemo(() => {
-    const combined = [...gamesData.iconic, ...gamesData.explore];
+    const combined = [...iconicGames, ...exploreGames];
     // Remove duplicatas por appid
     const unique = combined.filter(
       (game, index, self) => index === self.findIndex((g) => g.appid === game.appid)
     );
-    return unique.slice(0, 40); // Limita a 40 jogos
-  }, [gamesData]);
+    return unique.slice(0, 120); // Limita a 120 jogos como músicas
+  }, [iconicGames, exploreGames]);
 
   const totalPages = Math.ceil(allGames.length / GAMES_PER_PAGE);
   const currentGames = allGames.slice(
@@ -231,15 +302,41 @@ function GamesPage() {
     (currentPage + 1) * GAMES_PER_PAGE
   );
 
+  useEffect(() => {
+    Promise.all([
+      axios.get('/api/games/discover'),
+      axios.get('/api/games/genres')
+    ]).then(([discoverRes, genresRes]) => {
+      const iconic = discoverRes.data.iconic_games || [];
+      const explore = discoverRes.data.explore_games || [];
+
+      setIconicGames(iconic);
+      setExploreGames(explore);
+      setGenres(genresRes.data || []);
+      setIsDiscoverLoading(false);
+    }).catch(error => {
+      console.error('Erro ao carregar jogos:', error);
+      setIsDiscoverLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (currentPage >= totalPages && totalPages > 0) {
+      setCurrentPage(Math.max(0, totalPages - 1));
+    }
+  }, [totalPages, currentPage]);
+
   const debouncedSearch = useMemo(() => {
     let timer;
     return (query) => {
       clearTimeout(timer);
-      timer = setTimeout(() => {
-        axios
-          .get(`/api/games/search?q=${query}`)
-          .then((response) => setSearchResults(response.data || []))
-          .catch((error) => console.error('Erro ao buscar jogos!', error));
+      timer = setTimeout(async () => {
+        try {
+          const response = await axios.get(`/api/games/search?q=${query}`);
+          setSearchResults(response.data || []);
+        } catch (error) {
+          console.error('Erro na busca:', error);
+        }
       }, 300);
     };
   }, []);
@@ -261,31 +358,24 @@ function GamesPage() {
     );
   };
 
-  const handleGetRecommendations = () => {
+  const handleGetRecommendations = async () => {
     setIsRecommendLoading(true);
     const selectedIds = selectedGames.map((g) => g.appid);
 
-    axios
-      .post('/api/games/recommend', { game_ids: selectedIds, genre: selectedGenre })
-      .then((response) => {
-        const data = response.data;
-        if (data && data.recommendations && data.profile) {
-          setRecommendationResults(data);
-          setView('results');
-          setIsRecommendLoading(false);
-        } else {
-          console.error('Estrutura de dados da recomendação é inválida:', data);
-          alert('Ocorreu um erro inesperado ao processar as recomendações.');
-          setIsRecommendLoading(false);
-          setView('discover');
-        }
-      })
-      .catch((error) => {
-        console.error('Erro ao buscar recomendações de jogos:', error);
-        alert('Ocorreu um erro ao gerar as recomendações.');
-        setIsRecommendLoading(false);
-        setView('discover');
+    try {
+      const response = await axios.post('/api/games/recommend', {
+        game_ids: selectedIds,
+        genre: selectedGenre
       });
+
+      setRecommendationResults(response.data);
+      setView('results');
+    } catch (error) {
+      console.error('Erro ao gerar recomendações:', error);
+      alert('Erro ao gerar recomendações');
+    } finally {
+      setIsRecommendLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -299,54 +389,35 @@ function GamesPage() {
 
   const isSelected = (game) => !!selectedGames.find((g) => g.appid === game.appid);
   const showDiscoverSections = searchQuery.length < 3;
+  const canRecommend = selectedGames.length >= 3;
 
   const handleNextPage = () => {
-    if (currentPage < totalPages - 1) {
-      setCurrentPage(currentPage + 1);
-    }
+    if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
   };
 
   const handlePrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
-  if (isGlobalLoading) return <LoadingScreen text={loadingStatus} />;
-  if (isRecommendLoading) return <LoadingScreen text="Gerando recomendações..." />;
+  if (isDiscoverLoading || isRecommendLoading) return <LoadingScreen />;
 
-  if (view === 'results')
+  if (view === 'results') {
     return (
       <ResultsPage
         recommendations={recommendationResults.recommendations}
         profile={recommendationResults.profile}
+        selectedGenre={selectedGenre}
         onBack={handleReset}
       />
     );
+  }
 
   return (
     <>
       <PageStyles />
       <div className="games-minimal-container">
         <div className="games-minimal-content">
-          <motion.header
-            className="games-minimal-header"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="games-minimal-title">Jogos</h1>
-            <p className="games-minimal-subtitle">descubra sua próxima aventura</p>
-          </motion.header>
-
-          <GameSelector
-            selectedGames={selectedGames}
-            onRecommend={handleGetRecommendations}
-            genres={gamesData.genres}
-            onGenreChange={setSelectedGenre}
-          />
-
-          <div className="games-search-wrapper">
+          <div className="games-top-controls">
             <div className="games-search-box">
               <svg className="games-search-icon" viewBox="0 0 24 24">
                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
@@ -357,80 +428,95 @@ function GamesPage() {
                 placeholder="buscar jogos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                data-testid="games-search-input"
               />
             </div>
+
+            <select
+              className="games-genre-select"
+              onChange={(e) => setSelectedGenre(e.target.value)}
+              value={selectedGenre}
+            >
+              <option value="">gênero (opcional)</option>
+              {genres.map((genre) => (
+                <option key={genre} value={genre}>{genre}</option>
+              ))}
+            </select>
+
+            <button
+              className="games-recommend-btn-compact"
+              disabled={!canRecommend}
+              onClick={handleGetRecommendations}
+            >
+              {canRecommend ? 'gerar recomendações' : `selecione ${3 - selectedGames.length}`}
+            </button>
           </div>
 
-          <AnimatePresence mode="wait">
-            {showDiscoverSections ? (
+          <AnimatePresence>
+            {selectedGames.length > 0 && (
               <motion.div
-                key="discover"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
+                className="games-selected-chips"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
               >
-                <section className="games-section">
-                  <h2 className="games-section-label">Explorar</h2>
-                  <div className="games-grid">
-                    {currentGames.map((game) => (
-                      <GameCard
-                        key={game.appid}
-                        game={game}
-                        onClick={() => handleCardClick(game)}
-                        isSelected={isSelected(game)}
-                      />
-                    ))}
-                  </div>
-                  {totalPages > 1 && (
-                    <div className="games-pagination">
-                      <button
-                        className="games-page-btn"
-                        onClick={handlePrevPage}
-                        disabled={currentPage === 0}
-                        data-testid="prev-page-btn"
-                      >
-                        ← Anterior
-                      </button>
-                      <div className="games-page-indicator">
-                        {currentPage + 1} / {totalPages}
-                      </div>
-                      <button
-                        className="games-page-btn"
-                        onClick={handleNextPage}
-                        disabled={currentPage === totalPages - 1}
-                        data-testid="next-page-btn"
-                      >
-                        Próximo →
-                      </button>
-                    </div>
-                  )}
-                </section>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="search"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <section className="games-section">
-                  <h2 className="games-section-label">Resultados</h2>
-                  <div className="games-grid">
-                    {searchResults.map((game) => (
-                      <GameCard
-                        key={game.appid}
-                        game={game}
-                        onClick={() => handleCardClick(game)}
-                        isSelected={isSelected(game)}
-                      />
-                    ))}
-                  </div>
-                </section>
+                {selectedGames.map((game) => (
+                  <motion.div
+                    key={game.appid}
+                    className="games-chip"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    layout
+                  >
+                    {game.name}
+                  </motion.div>
+                ))}
               </motion.div>
             )}
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            <motion.section
+              className="games-section"
+              key={showDiscoverSections ? 'discover' : 'search'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="games-grid">
+                {(showDiscoverSections ? currentGames : searchResults).map((game) => (
+                  <GameCard
+                    key={game.appid}
+                    game={game}
+                    onClick={() => handleCardClick(game)}
+                    isSelected={isSelected(game)}
+                  />
+                ))}
+              </div>
+
+              {showDiscoverSections && totalPages > 1 && (
+                <div className="games-pagination">
+                  <button
+                    className="games-page-btn"
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 0}
+                  >
+                    ← Anterior
+                  </button>
+                  <div className="games-page-indicator">
+                    {currentPage + 1} / {totalPages}
+                  </div>
+                  <button
+                    className="games-page-btn"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages - 1}
+                  >
+                    Próximo →
+                  </button>
+                </div>
+              )}
+            </motion.section>
           </AnimatePresence>
         </div>
       </div>
@@ -439,3 +525,4 @@ function GamesPage() {
 }
 
 export default GamesPage;
+
