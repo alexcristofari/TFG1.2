@@ -1,10 +1,40 @@
-// frontend/src/components/music/MusicPage.js (v4.0 - Minimal Clean Design)
-import React, { useState, useEffect, useMemo } from 'react';
+// frontend/src/components/music/MusicPage.js (v5.0 - Performance Optimized + Ultra Minimal)
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import MusicCard from './MusicCard';
 import MusicSelector from './MusicSelector';
 import MusicResultsPage from './MusicResultsPage';
+
+// ===== CACHE DE IMAGENS DO SPOTIFY =====
+const CACHE_KEY = 'spotify_images_cache';
+const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 dias
+
+const getImageCache = () => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return {};
+    const { data, timestamp } = JSON.parse(cached);
+    if (Date.now() - timestamp > CACHE_EXPIRY) {
+      localStorage.removeItem(CACHE_KEY);
+      return {};
+    }
+    return data;
+  } catch {
+    return {};
+  }
+};
+
+const saveImageCache = (cache) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      data: cache,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    console.warn('Cache storage failed:', e);
+  }
+};
 
 const PageStyles = () => (
   <style>{`
@@ -12,20 +42,20 @@ const PageStyles = () => (
       min-height: 100vh;
       background-color: #0a0a0a;
       color: #f5f5f5;
-      padding: 4rem 2rem;
+      padding: 2rem 2rem 4rem 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
     .music-minimal-content {
-      max-width: 1200px;
+      max-width: 1400px;
       width: 100%;
     }
 
     .music-minimal-header {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
     }
 
     .music-minimal-title {
@@ -33,29 +63,21 @@ const PageStyles = () => (
       font-weight: 600;
       color: #0d7a3f;
       letter-spacing: 0;
-      margin-bottom: 1rem;
       line-height: 1;
     }
 
-    .music-minimal-subtitle {
-      font-size: 0.95rem;
-      font-weight: 300;
-      color: #a0a0a0;
-      letter-spacing: 1.5px;
-      margin-top: 0.5rem;
-    }
-
-    .music-search-wrapper {
-      margin: 3rem auto;
+    .music-top-controls {
       display: flex;
-      justify-content: center;
-      max-width: 1000px;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
 
     .music-search-box {
       position: relative;
-      width: 100%;
-      max-width: 1000px;
+      flex: 2;
+      min-width: 300px;
     }
 
     .music-search-input {
@@ -63,8 +85,8 @@ const PageStyles = () => (
       background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #f5f5f5;
-      padding: 1rem 1rem 1rem 3rem;
-      font-size: 0.95rem;
+      padding: 0.85rem 0.85rem 0.85rem 2.5rem;
+      font-size: 0.9rem;
       border-radius: 50px;
       font-family: 'Inter', sans-serif;
       transition: all 0.3s ease;
@@ -83,44 +105,125 @@ const PageStyles = () => (
 
     .music-search-icon {
       position: absolute;
-      left: 1rem;
+      left: 0.85rem;
       top: 50%;
       transform: translateY(-50%);
-      width: 1.2rem;
-      height: 1.2rem;
+      width: 1rem;
+      height: 1rem;
       fill: #a0a0a0;
     }
 
-    .music-section {
-      margin: 4rem auto;
-      max-width: 1000px;
+    .music-genre-select {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f5f5f5;
+      padding: 0.85rem 1.2rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+      min-width: 180px;
     }
 
-    .music-section-label {
-      font-size: 0.8rem;
+    .music-genre-select:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .music-genre-select:focus {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: #0d7a3f;
+      outline: none;
+    }
+
+    .music-genre-select option {
+      background-color: #1a1a1a;
+      color: #f5f5f5;
+    }
+
+    .music-recommend-btn-compact {
+      background: linear-gradient(135deg, #0d7a3f, #0a5c30);
+      border: 1px solid rgba(13, 122, 63, 0.5);
+      color: #f5f5f5;
+      padding: 0.85rem 2rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
       font-weight: 500;
-      color: #a0a0a0;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      margin-bottom: 2.5rem;
-      text-align: center;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .music-recommend-btn-compact:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(13, 122, 63, 0.3);
+    }
+
+    .music-recommend-btn-compact:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .music-selected-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      min-height: 2rem;
+    }
+
+    .music-chip {
+      background-color: rgba(13, 122, 63, 0.15);
+      border: 1px solid rgba(13, 122, 63, 0.4);
+      color: #f5f5f5;
+      padding: 0.4rem 1rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      transition: all 0.3s ease;
+    }
+
+    .music-chip:hover {
+      background-color: rgba(13, 122, 63, 0.25);
+      border-color: #0d7a3f;
+    }
+
+    .music-section {
+      margin: 2rem auto 0 auto;
     }
 
     .music-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
-      max-width: 1000px;
-      margin: 0 auto;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1400px) {
+      .music-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
 
     @media (max-width: 1024px) {
+      .music-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
       .music-grid {
         grid-template-columns: repeat(2, 1fr);
       }
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 480px) {
       .music-grid {
         grid-template-columns: 1fr;
       }
@@ -135,37 +238,46 @@ const PageStyles = () => (
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: #0a0a0a;
+      background-color: #000000;
       z-index: 100;
-      flex-direction: column;
-      gap: 1rem;
     }
 
-    .music-loading-text {
-      color: #0d7a3f;
-      font-weight: 300;
-      font-size: 1.5rem;
-      letter-spacing: 1px;
+    .music-loading-dots {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .music-loading-dot {
+      width: 12px;
+      height: 12px;
+      background-color: #0d7a3f;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .music-loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .music-loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
     }
 
     .music-pagination {
       display: flex;
       justify-content: center;
       gap: 1rem;
-      margin-top: 3rem;
-      max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
+      margin-top: 2rem;
     }
 
     .music-page-btn {
       background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #f5f5f5;
-      padding: 0.75rem 1.5rem;
+      padding: 0.65rem 1.3rem;
       border-radius: 50px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-family: 'Inter', sans-serif;
       transition: all 0.3s ease;
     }
@@ -185,21 +297,20 @@ const PageStyles = () => (
       display: flex;
       align-items: center;
       color: #a0a0a0;
-      font-size: 0.9rem;
-      padding: 0 1rem;
+      font-size: 0.85rem;
+      padding: 0 0.8rem;
     }
   `}</style>
 );
 
-const LoadingScreen = ({ text }) => (
-  <motion.div
-    className="music-loading-screen"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-  >
-    <h1 className="music-loading-text">{text}</h1>
-  </motion.div>
+const LoadingScreen = () => (
+  <div className="music-loading-screen">
+    <div className="music-loading-dots">
+      <div className="music-loading-dot"></div>
+      <div className="music-loading-dot"></div>
+      <div className="music-loading-dot"></div>
+    </div>
+  </div>
 );
 
 function MusicPage() {
@@ -215,17 +326,17 @@ function MusicPage() {
   const [selectedTracks, setSelectedTracks] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
+  const [imageCache, setImageCache] = useState(getImageCache());
 
-  const TRACKS_PER_PAGE = 6;
+  const TRACKS_PER_PAGE = 12; // 6 colunas x 2 linhas
 
-  // Combina iconic e explore para ter ~30-40 músicas
+  // Combina iconic e explore
   const allTracks = useMemo(() => {
     const combined = [...iconicTracks, ...exploreTracks];
-    // Remove duplicatas por id
     const unique = combined.filter(
       (track, index, self) => index === self.findIndex((t) => t.id === track.id)
     );
-    return unique.slice(0, 40); // Limita a 40 músicas
+    return unique.slice(0, 60); // Mais músicas para evitar repetição
   }, [iconicTracks, exploreTracks]);
 
   const totalPages = Math.ceil(allTracks.length / TRACKS_PER_PAGE);
@@ -234,34 +345,88 @@ function MusicPage() {
     (currentPage + 1) * TRACKS_PER_PAGE
   );
 
+  // ===== BATCH FETCH DE IMAGENS =====
+  const fetchTrackDetailsBatch = useCallback(async (tracks) => {
+    if (!tracks || tracks.length === 0) return [];
+
+    // Filtra quais precisam buscar (não estão no cache)
+    const tracksNeedingFetch = tracks.filter(t => !imageCache[t.id]);
+    
+    if (tracksNeedingFetch.length === 0) {
+      // Todas já estão no cache
+      return tracks.map(t => ({
+        ...t,
+        image_url: imageCache[t.id]?.image_url,
+        preview_url: imageCache[t.id]?.preview_url
+      }));
+    }
+
+    try {
+      const trackIds = tracksNeedingFetch.map(t => t.id);
+      const response = await axios.post('/api/music/get-track-details', { track_ids: trackIds });
+      
+      // Atualiza cache
+      const newCache = { ...imageCache };
+      Object.keys(response.data).forEach(id => {
+        newCache[id] = response.data[id];
+      });
+      setImageCache(newCache);
+      saveImageCache(newCache);
+
+      // Retorna tracks enriquecidas
+      return tracks.map(track => ({
+        ...track,
+        image_url: newCache[track.id]?.image_url || imageCache[track.id]?.image_url,
+        preview_url: newCache[track.id]?.preview_url || imageCache[track.id]?.preview_url
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar detalhes:', error);
+      return tracks;
+    }
+  }, [imageCache]);
+
+  // ===== CARREGAMENTO INICIAL =====
   useEffect(() => {
-    // Busca dados de descoberta e gêneros
     Promise.all([
       axios.get('/api/music/discover'),
       axios.get('/api/music/genres')
-    ]).then(([discoverRes, genresRes]) => {
-      fetchTrackDetails(discoverRes.data.iconic, setIconicTracks);  // ← CORRIGIDO
-      fetchTrackDetails(discoverRes.data.explore, setExploreTracks);  // ← CORRIGIDO
+    ]).then(async ([discoverRes, genresRes]) => {
+      const iconic = discoverRes.data.iconic || [];
+      const explore = discoverRes.data.explore || [];
+
+      // BATCH: Busca todas as imagens de uma vez
+      const [enrichedIconic, enrichedExplore] = await Promise.all([
+        fetchTrackDetailsBatch(iconic),
+        fetchTrackDetailsBatch(explore)
+      ]);
+
+      setIconicTracks(enrichedIconic);
+      setExploreTracks(enrichedExplore);
       setGenres(genresRes.data || []);
       setIsDiscoverLoading(false);
     }).catch(error => {
-      console.error('Erro ao buscar dados iniciais de músicas!', error);
+      console.error('Erro ao carregar músicas:', error);
       setIsDiscoverLoading(false);
     });
-  }, []);
+  }, [fetchTrackDetailsBatch]);
 
+  // ===== BUSCA COM DEBOUNCE =====
   const debouncedSearch = useMemo(() => {
     let timer;
     return (query) => {
       clearTimeout(timer);
-      timer = setTimeout(() => {
-        axios
-          .get(`/api/music/search?q=${query}`)
-          .then((response) => fetchTrackDetails(response.data || [], setSearchResults))
-          .catch((error) => console.error('Erro ao buscar músicas!', error));
+      timer = setTimeout(async () => {
+        try {
+          const response = await axios.get(`/api/music/search?q=${query}`);
+          const results = response.data || [];
+          const enriched = await fetchTrackDetailsBatch(results);
+          setSearchResults(enriched);
+        } catch (error) {
+          console.error('Erro na busca:', error);
+        }
       }, 300);
     };
-  }, []);
+  }, [fetchTrackDetailsBatch]);
 
   useEffect(() => {
     if (searchQuery.length < 3) {
@@ -272,23 +437,6 @@ function MusicPage() {
     }
   }, [searchQuery, debouncedSearch]);
 
-  const fetchTrackDetails = (tracks, setter) => {
-    if (!tracks || tracks.length === 0) {
-      setter([]);
-      return;
-    }
-    const trackIds = tracks.map(t => t.id);
-    axios.post('/api/music/get-track-details', { track_ids: trackIds })
-      .then(detailsRes => {
-        const enrichedTracks = tracks.map(track => ({
-          ...track,
-          image_url: detailsRes.data[track.id]?.image_url,
-          preview_url: detailsRes.data[track.id]?.preview_url,
-        }));
-        setter(enrichedTracks);
-      });
-  };
-
   const handleCardClick = (track) => {
     setSelectedTracks((prev) =>
       prev.find((t) => t.id === track.id)
@@ -297,36 +445,39 @@ function MusicPage() {
     );
   };
 
-  const handleGetRecommendations = () => {
+  const handleGetRecommendations = async () => {
     setIsRecommendLoading(true);
     const selectedIds = selectedTracks.map((t) => t.id);
 
-    axios
-      .post('/api/music/recommend', { track_ids: selectedIds, genre: selectedGenre })
-      .then((response) => {
-        const allRecs = Object.values(response.data.recommendations).flat();
-        const trackIds = allRecs.map(t => t.id);
-        
-        axios.post('/api/music/get-track-details', { track_ids: trackIds })
-          .then(detailsRes => {
-            const enrichedRecs = { ...response.data.recommendations };
-            Object.keys(enrichedRecs).forEach(category => {
-              enrichedRecs[category] = enrichedRecs[category].map(track => ({
-                ...track,
-                image_url: detailsRes.data[track.id]?.image_url,
-              }));
-            });
-            setRecommendationResults({ ...response.data, recommendations: enrichedRecs });
-            setView('results');
-            setIsRecommendLoading(false);
-          });
-      })
-      .catch((error) => {
-        console.error('Erro ao buscar recomendações de músicas:', error);
-        alert('Ocorreu um erro ao gerar as recomendações.');
-        setIsRecommendLoading(false);
-        setView('discover');
+    try {
+      const response = await axios.post('/api/music/recommend', {
+        track_ids: selectedIds,
+        genre: selectedGenre
       });
+
+      const allRecs = Object.values(response.data.recommendations).flat();
+      const enriched = await fetchTrackDetailsBatch(allRecs);
+
+      // Reconstrói por categoria
+      const enrichedRecs = {};
+      Object.keys(response.data.recommendations).forEach(category => {
+        enrichedRecs[category] = response.data.recommendations[category].map(track => {
+          const found = enriched.find(e => e.id === track.id);
+          return found || track;
+        });
+      });
+
+      setRecommendationResults({
+        ...response.data,
+        recommendations: enrichedRecs
+      });
+      setView('results');
+    } catch (error) {
+      console.error('Erro ao gerar recomendações:', error);
+      alert('Erro ao gerar recomendações');
+    } finally {
+      setIsRecommendLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -340,23 +491,19 @@ function MusicPage() {
 
   const isSelected = (track) => !!selectedTracks.find((t) => t.id === track.id);
   const showDiscoverSections = searchQuery.length < 3;
+  const canRecommend = selectedTracks.length >= 3;
 
   const handleNextPage = () => {
-    if (currentPage < totalPages - 1) {
-      setCurrentPage(currentPage + 1);
-    }
+    if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
   };
 
   const handlePrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
-  if (isDiscoverLoading) return <LoadingScreen text="Carregando músicas..." />;
-  if (isRecommendLoading) return <LoadingScreen text="Gerando recomendações..." />;
+  if (isDiscoverLoading || isRecommendLoading) return <LoadingScreen />;
 
-  if (view === 'results')
+  if (view === 'results') {
     return (
       <MusicResultsPage
         recommendations={recommendationResults.recommendations}
@@ -364,6 +511,7 @@ function MusicPage() {
         onBack={handleReset}
       />
     );
+  }
 
   return (
     <>
@@ -374,19 +522,13 @@ function MusicPage() {
             className="music-minimal-header"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.6 }}
           >
             <h1 className="music-minimal-title">Músicas</h1>
           </motion.header>
 
-          <MusicSelector
-            selectedTracks={selectedTracks}
-            onRecommend={handleGetRecommendations}
-            genres={genres}
-            onGenreChange={setSelectedGenre}
-          />
-
-          <div className="music-search-wrapper">
+          {/* BARRA DE CONTROLES COMPACTA */}
+          <div className="music-top-controls">
             <div className="music-search-box">
               <svg className="music-search-icon" viewBox="0 0 24 24">
                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
@@ -397,80 +539,97 @@ function MusicPage() {
                 placeholder="buscar músicas..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                data-testid="music-search-input"
               />
             </div>
+
+            <select
+              className="music-genre-select"
+              onChange={(e) => setSelectedGenre(e.target.value)}
+              value={selectedGenre}
+            >
+              <option value="">gênero (opcional)</option>
+              {genres.map((genre) => (
+                <option key={genre} value={genre}>{genre}</option>
+              ))}
+            </select>
+
+            <button
+              className="music-recommend-btn-compact"
+              disabled={!canRecommend}
+              onClick={handleGetRecommendations}
+            >
+              {canRecommend ? 'gerar recomendações' : `selecione ${3 - selectedTracks.length}`}
+            </button>
           </div>
 
-          <AnimatePresence mode="wait">
-            {showDiscoverSections ? (
+          {/* CHIPS DE SELEÇÃO */}
+          <AnimatePresence>
+            {selectedTracks.length > 0 && (
               <motion.div
-                key="discover"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
+                className="music-selected-chips"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
               >
-                <section className="music-section">
-                  <h2 className="music-section-label">EXPLORAR</h2>
-                  <div className="music-grid">
-                    {currentTracks.map((track) => (
-                      <MusicCard
-                        key={track.id}
-                        track={track}
-                        onClick={() => handleCardClick(track)}
-                        isSelected={isSelected(track)}
-                      />
-                    ))}
-                  </div>
-                  {totalPages > 1 && (
-                    <div className="music-pagination">
-                      <button
-                        className="music-page-btn"
-                        onClick={handlePrevPage}
-                        disabled={currentPage === 0}
-                        data-testid="prev-page-btn"
-                      >
-                        ← Anterior
-                      </button>
-                      <div className="music-page-indicator">
-                        {currentPage + 1} / {totalPages}
-                      </div>
-                      <button
-                        className="music-page-btn"
-                        onClick={handleNextPage}
-                        disabled={currentPage === totalPages - 1}
-                        data-testid="next-page-btn"
-                      >
-                        Próximo →
-                      </button>
-                    </div>
-                  )}
-                </section>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="search"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <section className="music-section">
-                  <h2 className="music-section-label">RESULTADOS</h2>
-                  <div className="music-grid">
-                    {searchResults.map((track) => (
-                      <MusicCard
-                        key={track.id}
-                        track={track}
-                        onClick={() => handleCardClick(track)}
-                        isSelected={isSelected(track)}
-                      />
-                    ))}
-                  </div>
-                </section>
+                {selectedTracks.map((track) => (
+                  <motion.div
+                    key={track.id}
+                    className="music-chip"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    layout
+                  >
+                    {track.name}
+                  </motion.div>
+                ))}
               </motion.div>
             )}
+          </AnimatePresence>
+
+          {/* GRID DE MÚSICAS */}
+          <AnimatePresence mode="wait">
+            <motion.section
+              className="music-section"
+              key={showDiscoverSections ? 'discover' : 'search'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="music-grid">
+                {(showDiscoverSections ? currentTracks : searchResults).map((track) => (
+                  <MusicCard
+                    key={track.id}
+                    track={track}
+                    onClick={() => handleCardClick(track)}
+                    isSelected={isSelected(track)}
+                  />
+                ))}
+              </div>
+
+              {showDiscoverSections && totalPages > 1 && (
+                <div className="music-pagination">
+                  <button
+                    className="music-page-btn"
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 0}
+                  >
+                    ← Anterior
+                  </button>
+                  <div className="music-page-indicator">
+                    {currentPage + 1} / {totalPages}
+                  </div>
+                  <button
+                    className="music-page-btn"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages - 1}
+                  >
+                    Próximo →
+                  </button>
+                </div>
+              )}
+            </motion.section>
           </AnimatePresence>
         </div>
       </div>
