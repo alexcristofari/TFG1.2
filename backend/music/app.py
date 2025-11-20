@@ -275,19 +275,19 @@ def discover():
 
         # Músicas icônicas (populares)
         if 'popularity' in df_music.columns:
-            iconic = df_music.nlargest(20, 'popularity')
+            iconic = df_music.nlargest(36, 'popularity')
         else:
-            iconic = df_music.head(20)
+            iconic = df_music.head(36)
 
         # Músicas para explorar (alta qualidade, diversas)
         if 'popularity' in df_music.columns:
-            explore_df = df_music[df_music['popularity'] > 70]
-            if len(explore_df) >= 20:
-                explore = explore_df.sample(20)
+            explore_df = df_music[df_music['popularity'] > 50]
+            if len(explore_df) >= 36:
+                explore = explore_df.sample(36)
             else:
                 explore = explore_df
         else:
-            explore = df_music.sample(min(20, len(df_music)))
+            explore = df_music.sample(min(36, len(df_music)))
 
         # Converter para dicionários
         iconic_list = iconic.to_dict('records')

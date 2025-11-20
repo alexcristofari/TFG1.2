@@ -81,7 +81,7 @@ class GameRecommender:
         explore_df = self.df[
             (self.df['quality'] > 0.92) &
             (~self.df['genres'].apply(lambda g: check_genre_in_item(g, 'Ação') or check_genre_in_item(g, 'Aventura') or check_genre_in_item(g, 'RPG') or check_genre_in_item(g, 'Estratégia')))
-        ].sample(n=15, random_state=42)
+        ].sample(n=29, random_state=42)
         return self.get_df_as_records(iconic_games), self.get_df_as_records(explore_df)
 
     def get_recommendations(self, selected_game_ids, genre_to_explore=None):
@@ -181,7 +181,7 @@ def recommend():
             exclude_ids.update(recs['appid'].tolist())
             return recs
 
-        main_recs = get_unique_recs(recs_df, 6, used_appids)
+        main_recs = get_unique_recs(recs_df, 12, used_appids)
         hidden_gems = get_unique_recs(recs_df[recs_df['quality'] < 0.88], 6, used_appids)
         
         genre_favorites = pd.DataFrame()

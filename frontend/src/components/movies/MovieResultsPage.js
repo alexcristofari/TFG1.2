@@ -7,7 +7,7 @@ const PageStyles = () => (
   <style>{`
     .movies-results-container {
       min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0c0c0cff 0%, #161515ff 100%);
       padding: 2rem;
     }
 
@@ -30,7 +30,7 @@ const PageStyles = () => (
     }
 
     .movies-profile-summary {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(8, 8, 8, 0.1);
       backdrop-filter: blur(10px);
       border-radius: 20px;
       padding: 2rem;
@@ -74,13 +74,13 @@ const PageStyles = () => (
     }
 
     .movies-profile-highlight {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      background: linear-gradient(135deg, #c4132bff 0%, #d60c27ff 100%);
       color: white;
       padding: 0.75rem 1.5rem;
       border-radius: 25px;
       font-weight: 600;
       font-size: 1rem;
-      box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+      box-shadow: 0 4px 15px rgba(8, 0, 8, 0.4);
     }
 
     .movies-recommendation-section {
@@ -106,7 +106,7 @@ const PageStyles = () => (
       margin: 3rem auto 0;
       padding: 1rem 3rem;
       background: white;
-      color: #667eea;
+      color: #0a0a0aff;
       border: none;
       border-radius: 50px;
       font-size: 1.1rem;
