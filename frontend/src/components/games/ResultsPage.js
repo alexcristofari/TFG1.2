@@ -1,23 +1,19 @@
-// frontend/src/components/games/ResultsPage.js (v5.0 - Padrão Steam Minimalista)
 import React from 'react';
 import { motion } from 'framer-motion';
+import styled from 'styled-components';
 import GameCard from './GameCard';
 
 const PageStyles = () => (
   <style>{`
     .games-results-container {
       min-height: 100vh;
-      background-color: #0a0e12;
-      color: #f5f5f5;
-      padding: 4rem 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
     }
 
     .games-results-content {
       max-width: 1400px;
-      width: 100%;
+      margin: 0 auto;
     }
 
     .games-results-header {
@@ -26,53 +22,49 @@ const PageStyles = () => (
     }
 
     .games-results-title {
-      font-size: 2.5rem;
-      font-weight: 600;
-      color: #f5f5f5;
-      letter-spacing: -0.02em;
-      margin-bottom: 1rem;
-      line-height: 1.2;
+      font-size: 3rem;
+      font-weight: 800;
+      color: white;
+      margin: 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
 
     .games-profile-summary {
-      background-color: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
       padding: 2rem;
-      border-radius: 16px;
-      margin-bottom: 4rem;
+      margin-bottom: 3rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .games-profile-title {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
+      color: white;
+      margin: 0 0 1rem 0;
       font-weight: 600;
-      color: #f5f5f5;
-      margin-bottom: 1.5rem;
-      letter-spacing: 0;
+    }
+
+    .games-profile-genres-label {
+      color: rgba(255, 255, 255, 0.9);
+      margin: 0 0 0.5rem 0;
+      font-weight: 500;
     }
 
     .games-profile-games {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
     }
 
     .games-profile-game-tag {
-      background-color: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #f5f5f5;
-      padding: 0.5rem 1.25rem;
-      border-radius: 50px;
-      font-size: 0.85rem;
-      font-weight: 400;
-      letter-spacing: 0.3px;
-    }
-
-    .games-profile-genres-label {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
       font-size: 0.9rem;
-      color: #a0a0a0;
-      margin-bottom: 0.75rem;
-      letter-spacing: 0.3px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .games-profile-highlights {
@@ -82,95 +74,93 @@ const PageStyles = () => (
     }
 
     .games-profile-highlight {
-      background: linear-gradient(135deg, rgba(74, 159, 216, 0.3), rgba(30, 53, 72, 0.2));
-      border: 1px solid rgba(74, 159, 216, 0.5);
-      color: #f5f5f5;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
       padding: 0.75rem 1.5rem;
-      border-radius: 50px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      letter-spacing: 0.3px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
     }
 
     .games-recommendation-section {
-      margin-bottom: 3rem;
+      margin-bottom: 4rem;
     }
 
     .games-category-title {
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: #f5f5f5;
-      margin-bottom: 2rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      letter-spacing: -0.01em;
+      font-size: 2rem;
+      color: white;
+      margin: 0 0 1.5rem 0;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
 
     .games-results-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
     }
 
-    @media (max-width: 1200px) {
-      .games-results-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1.5rem;
-      }
+    .games-back-button {
+      display: block;
+      margin: 3rem auto 0;
+      padding: 1rem 3rem;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .games-back-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     }
 
     @media (max-width: 768px) {
-      .games-results-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 1rem;
-      }
-
       .games-results-title {
         font-size: 2rem;
       }
 
       .games-category-title {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
       }
-    }
 
-    .games-back-button {
-      background: linear-gradient(135deg, #4a9fd8, #1e3548);
-      border: 1px solid rgba(74, 159, 216, 0.5);
-      color: #f5f5f5;
-      padding: 1rem 2.5rem;
-      border-radius: 50px;
-      font-size: 1rem;
-      font-weight: 500;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      letter-spacing: 0.5px;
-      margin: 4rem auto 0;
-      display: block;
-      border: none;
-    }
-
-    .games-back-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(74, 159, 216, 0.4);
-      background: linear-gradient(135deg, #1e3548, #4a9fd8);
+      .games-results-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+      }
     }
   `}</style>
 );
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
 };
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.5
+    }
+  }
 };
 
 function ResultsPage({ recommendations, profile, selectedGenre, onBack }) {
-  const { main, hidden_gems, genre_favorites } = recommendations || {};
+  const { main, genre_favorites, famous, hidden_gems } = recommendations || {};
   const { games, dominant_genre } = profile || {};
 
   const renderCategory = (title, gamesList) => {
@@ -244,6 +234,8 @@ function ResultsPage({ recommendations, profile, selectedGenre, onBack }) {
             renderCategory(`Explorando ${selectedGenre}`, genre_favorites)
           }
           
+          {renderCategory("Jogos Famosos", famous)}
+          
           {renderCategory("Jóias Escondidas", hidden_gems)}
 
           <motion.button
@@ -263,4 +255,3 @@ function ResultsPage({ recommendations, profile, selectedGenre, onBack }) {
 }
 
 export default ResultsPage;
-

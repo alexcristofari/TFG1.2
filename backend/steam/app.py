@@ -181,13 +181,13 @@ def recommend():
             exclude_ids.update(recs['appid'].tolist())
             return recs
 
-        main_recs = get_unique_recs(recs_df, 8, used_appids)
-        hidden_gems = get_unique_recs(recs_df[recs_df['quality'] < 0.88], 8, used_appids)
+        main_recs = get_unique_recs(recs_df, 6, used_appids)
+        hidden_gems = get_unique_recs(recs_df[recs_df['quality'] < 0.88], 6, used_appids)
         
         genre_favorites = pd.DataFrame()
         if genre:
             genre_recs_df = recs_df[recs_df['genres'].apply(lambda g: check_genre_in_item(g, genre))]
-            genre_favorites = get_unique_recs(genre_recs_df, 8, used_appids)
+            genre_favorites = get_unique_recs(genre_recs_df, 6, used_appids)
 
         recommendations = {
             "main": recommender.get_df_as_records(main_recs),

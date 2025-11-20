@@ -104,16 +104,23 @@ class MovieRecommender:
         cosine_similarities = cosine_similarity(user_profile_array, self.tfidf_matrix[all_recs_df.index]).flatten()
         all_recs_df['similarity'] = cosine_similarities
         all_recs_df = self._calculate_hybrid_score(all_recs_df)
-        main_recs = self._finalize_recommendations(all_recs_df, 12)
+        
+        # 1. Recomendações Principais: 10 itens
+        main_recs = self._finalize_recommendations(all_recs_df, 10)
         exclude_ids.update([rec['id'] for rec in main_recs])
-        genre_favorites = self.recommend_by_genre(selected_genre, exclude_ids)
+        
+        # 2. Explorando Gênero: 5 itens (se selecionado)
+        genre_favorites = self.recommend_by_genre(selected_genre, exclude_ids) if selected_genre else []
         exclude_ids.update([rec['id'] for rec in genre_favorites])
-        blockbusters = self._finalize_recommendations(all_recs_df[~all_recs_df['id'].isin(exclude_ids) & (all_recs_df['popularity'] > self.QUANTILE_95_POPULARITY)], 6)
+        
+        # 3. Blockbusters: 5 itens (alta popularidade)
+        blockbusters = self._finalize_recommendations(all_recs_df[~all_recs_df['id'].isin(exclude_ids) & (all_recs_df['popularity'] > self.QUANTILE_95_POPULARITY)], 5)
         exclude_ids.update([rec['id'] for rec in blockbusters])
-        cult_classics = self._finalize_recommendations(all_recs_df[~all_recs_df['id'].isin(exclude_ids) & (self.df_movies['release_date_dt'].dt.year < 2005) & (all_recs_df['vote_average'] > 7.0)], 6)
-        exclude_ids.update([rec['id'] for rec in cult_classics])
-        hidden_gems = self._finalize_recommendations(all_recs_df[~all_recs_df['id'].isin(exclude_ids) & (all_recs_df['vote_average'] > 7.5) & (all_recs_df['popularity'] < self.df_movies['popularity'].quantile(0.7)) & (all_recs_df['popularity'] > self.df_movies['popularity'].quantile(0.3))], 6)
-        return {"main": main_recs, "blockbusters": blockbusters, "genre_favorites": genre_favorites, "cult_classics": cult_classics, "hidden_gems": hidden_gems}
+        
+        # 4. Jóias Escondidas: 5 itens (baixa popularidade + alta qualidade)
+        hidden_gems = self._finalize_recommendations(all_recs_df[~all_recs_df['id'].isin(exclude_ids) & (all_recs_df['vote_average'] > 7.5) & (all_recs_df['popularity'] < self.df_movies['popularity'].quantile(0.3))], 5)
+        
+        return {"main": main_recs, "blockbusters": blockbusters, "genre_favorites": genre_favorites, "hidden_gems": hidden_gems}
 
     def recommend_by_genre(self, genre_name, exclude_ids):
         if not genre_name: return []
@@ -124,7 +131,7 @@ class MovieRecommender:
         pop_score = (genre_df['popularity'] / pop_max * 100) if pop_max > 0 else 0
         quality_score = genre_df['vote_average'] * 10
         genre_df['hybrid_score'] = (quality_score * QUALITY_WEIGHT) + (pop_score * POPULARITY_WEIGHT)
-        return self._finalize_recommendations(genre_df, 6, score_column='hybrid_score')
+        return self._finalize_recommendations(genre_df, 5, score_column='hybrid_score')
 
     def analyze_user_profile(self, selected_movie_ids):
         selected_movies = self.df_movies[self.df_movies['id'].isin(selected_movie_ids)]

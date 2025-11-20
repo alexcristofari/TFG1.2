@@ -1,23 +1,19 @@
-// frontend/src/components/music/MusicResultsPage.js (v5.2 - Corrigido gênero selecionado)
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import styled from 'styled-components';
 import MusicCard from './MusicCard';
 
 const PageStyles = () => (
   <style>{`
     .music-results-container {
       min-height: 100vh;
-      background-color: #0a0a0a;
-      color: #f5f5f5;
-      padding: 4rem 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
     }
 
     .music-results-content {
       max-width: 1400px;
-      width: 100%;
+      margin: 0 auto;
     }
 
     .music-results-header {
@@ -26,70 +22,49 @@ const PageStyles = () => (
     }
 
     .music-results-title {
-      font-size: 2.5rem;
-      font-weight: 600;
-      color: #f5f5f5;
-      letter-spacing: -0.02em;
-      margin-bottom: 1rem;
-      line-height: 1.2;
+      font-size: 3rem;
+      font-weight: 800;
+      color: white;
+      margin: 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
 
     .music-profile-summary {
-      background-color: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
       padding: 2rem;
-      border-radius: 16px;
-      margin-bottom: 4rem;
+      margin-bottom: 3rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .music-profile-title {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
+      color: white;
+      margin: 0 0 1rem 0;
       font-weight: 600;
-      color: #f5f5f5;
-      margin-bottom: 1.5rem;
-      letter-spacing: 0;
+    }
+
+    .music-profile-tracks-label {
+      color: rgba(255, 255, 255, 0.9);
+      margin: 0 0 0.5rem 0;
+      font-weight: 500;
     }
 
     .music-profile-tracks {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
     }
 
     .music-profile-track-tag {
-      background-color: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #f5f5f5;
-      padding: 0.5rem 1.25rem;
-      border-radius: 50px;
-      font-size: 0.85rem;
-      font-weight: 400;
-      letter-spacing: 0.3px;
-    }
-
-    .music-profile-genres-label {
-      font-size: 0.9rem;
-      color: #a0a0a0;
-      margin-bottom: 0.75rem;
-      letter-spacing: 0.3px;
-    }
-
-    .music-profile-genres {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .music-profile-genre-tag {
-      background-color: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #f5f5f5;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
       padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 400;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .music-profile-highlights {
@@ -99,115 +74,94 @@ const PageStyles = () => (
     }
 
     .music-profile-highlight {
-      background: linear-gradient(135deg, rgba(13, 122, 63, 0.3), rgba(10, 92, 48, 0.2));
-      border: 1px solid rgba(13, 122, 63, 0.5);
-      color: #f5f5f5;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
       padding: 0.75rem 1.5rem;
-      border-radius: 50px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      letter-spacing: 0.3px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
     }
 
     .music-recommendation-section {
-      margin-bottom: 3rem;
+      margin-bottom: 4rem;
     }
 
     .music-category-title {
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: #f5f5f5;
-      margin-bottom: 2rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      letter-spacing: -0.01em;
+      font-size: 2rem;
+      color: white;
+      margin: 0 0 1.5rem 0;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
 
     .music-results-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.5rem;
     }
 
-    @media (max-width: 1200px) {
-      .music-results-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1.5rem;
-      }
+    .music-back-button {
+      display: block;
+      margin: 3rem auto 0;
+      padding: 1rem 3rem;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .music-back-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     }
 
     @media (max-width: 768px) {
-      .music-results-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 1rem;
-      }
-
       .music-results-title {
         font-size: 2rem;
       }
 
       .music-category-title {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
       }
-    }
 
-    .music-back-button {
-      background: linear-gradient(135deg, #0d7a3f, #0a5c30);
-      border: 1px solid rgba(13, 122, 63, 0.5);
-      color: #f5f5f5;
-      padding: 1rem 2.5rem;
-      border-radius: 50px;
-      font-size: 1rem;
-      font-weight: 500;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      letter-spacing: 0.5px;
-      margin: 4rem auto 0;
-      display: block;
-      border: none;
-    }
-
-    .music-back-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(13, 122, 63, 0.4);
-      background: linear-gradient(135deg, #0a5c30, #0d7a3f);
+      .music-results-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+      }
     }
   `}</style>
 );
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
 };
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.5
+    }
+  }
 };
 
 function MusicResultsPage({ recommendations, profile, selectedGenre, onBack }) {
-  const { main, hidden_gems } = recommendations || {};
+  const { main, genre_favorites, popular, hidden_gems } = recommendations || {};
   const { tracks, dominant_genre, genres_found } = profile || {};
-
-  // Encontrar recomendações do gênero selecionado
-  const genreRecommendations = React.useMemo(() => {
-    if (!selectedGenre || !recommendations) return null;
-    
-    // Procurar por todas as chaves que contenham o gênero selecionado
-    const genreKeys = Object.keys(recommendations).filter(key => 
-      key.toLowerCase().includes(selectedGenre.toLowerCase())
-    );
-    
-    if (genreKeys.length > 0) {
-      // Combinar todas as recomendações do gênero
-      return genreKeys.reduce((acc, key) => {
-        return [...acc, ...(recommendations[key] || [])];
-      }, []);
-    }
-    
-    return null;
-  }, [recommendations, selectedGenre]);
 
   const renderCategory = (title, tracksList) => {
     if (!tracksList || tracksList.length === 0) return null;
@@ -239,7 +193,7 @@ function MusicResultsPage({ recommendations, profile, selectedGenre, onBack }) {
       >
         <div className="music-results-content">
           <motion.header className="music-results-header" variants={itemVariants}>
-            <h1 className="music-results-title">Suas Recomendações Musicais</h1>
+            <h1 className="music-results-title">Suas Recomendações de Músicas</h1>
           </motion.header>
 
           {profile && (
@@ -248,23 +202,12 @@ function MusicResultsPage({ recommendations, profile, selectedGenre, onBack }) {
 
               {tracks && tracks.length > 0 && (
                 <>
-                  <p className="music-profile-genres-label">Músicas selecionadas:</p>
+                  <p className="music-profile-tracks-label">Músicas selecionadas:</p>
                   <div className="music-profile-tracks">
                     {tracks.map(track => (
                       <span key={track.id} className="music-profile-track-tag">
-                        {track.name || track.track_name}
+                        {track.name}
                       </span>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {genres_found && genres_found.length > 0 && (
-                <>
-                  <p className="music-profile-genres-label">Gêneros encontrados na sua seleção:</p>
-                  <div className="music-profile-genres">
-                    {genres_found.map((genre, idx) => (
-                      <span key={idx} className="music-profile-genre-tag">{genre}</span>
                     ))}
                   </div>
                 </>
@@ -287,9 +230,11 @@ function MusicResultsPage({ recommendations, profile, selectedGenre, onBack }) {
 
           {renderCategory("Recomendações Principais", main)}
           
-          {selectedGenre && genreRecommendations && genreRecommendations.length > 0 && 
-            renderCategory(`Explorando ${selectedGenre}`, genreRecommendations)
+          {selectedGenre && genre_favorites && genre_favorites.length > 0 && 
+            renderCategory(`Explorando ${selectedGenre}`, genre_favorites)
           }
+          
+          {renderCategory("Músicas Populares", popular)}
           
           {renderCategory("Jóias Escondidas", hidden_gems)}
 

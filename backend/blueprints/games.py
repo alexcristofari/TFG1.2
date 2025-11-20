@@ -177,30 +177,36 @@ def recommend_games_api():
     recommendations = {}
     page_used_ids = set(selected_ids)
 
+    # 1. Recomendações Principais: 10 itens
     main_recs_df = recs_df[~recs_df['appid'].isin(page_used_ids)].head(10)
     if not main_recs_df.empty:
-        recommendations["Recomendações Principais"] = recommender_games.get_df_as_records(main_recs_df)
+        recommendations["main"] = recommender_games.get_df_as_records(main_recs_df)
         page_used_ids.update(main_recs_df['appid'].tolist())
 
+    # 2. Explorando Gênero: 5 itens (se selecionado)
     if selected_genre_to_explore:
         explore_df = recs_df[recs_df['genres'].apply(lambda g: check_genre_in_item(g, selected_genre_to_explore)) & ~recs_df['appid'].isin(page_used_ids)].head(5)
         if not explore_df.empty:
-            recommendations[f"Explorando o Gênero: {selected_genre_to_explore}"] = recommender_games.get_df_as_records(explore_df)
+            recommendations["genre_favorites"] = recommender_games.get_df_as_records(explore_df)
             page_used_ids.update(explore_df['appid'].tolist())
 
-    opposite_genres_to_find = set(OPPOSITE_GENRES_MAP.get(dominant_genre, []))
-    if opposite_genres_to_find:
-        chosen_opposite_genre = random.choice(list(opposite_genres_to_find))
-        opposite_df = recommender_games.df[recommender_games.df['genres'].apply(lambda g: check_genre_in_item(g, chosen_opposite_genre)) & ~recommender_games.df['appid'].isin(page_used_ids)].sort_values('quality', ascending=False).head(5)
-        if not opposite_df.empty:
-            opposite_recs_list = recommender_games.get_df_as_records(opposite_df)
-            for rec in opposite_recs_list: rec['display_score'] = random.uniform(85.0, 95.0)
-            recommendations[f"Para Sair da Rotina: {chosen_opposite_genre}"] = opposite_recs_list
-            page_used_ids.update(opposite_df['appid'].tolist())
+    # 3. Jogos Famosos: 5 itens (alta qualidade)
+    famous_df = recs_df[
+        (recs_df['quality'] > 0.92) & 
+        ~recs_df['appid'].isin(page_used_ids)
+    ].head(5)
+    if not famous_df.empty:
+        recommendations["famous"] = recommender_games.get_df_as_records(famous_df)
+        page_used_ids.update(famous_df['appid'].tolist())
 
-    classic_recs_df = recs_df[(recs_df['release_year'] < 2018) & ~recs_df['appid'].isin(page_used_ids)].head(5)
-    if not classic_recs_df.empty:
-        recommendations["Clássicos do seu Estilo"] = recommender_games.get_df_as_records(classic_recs_df)
+    # 4. Jóias Escondidas: 5 itens (baixa popularidade + alta similaridade)
+    hidden_gems_df = recs_df[
+        (recs_df['quality'] < 0.88) &
+        (recs_df['display_score'] > 75) &
+        ~recs_df['appid'].isin(page_used_ids)
+    ].head(5)
+    if not hidden_gems_df.empty:
+        recommendations["hidden_gems"] = recommender_games.get_df_as_records(hidden_gems_df)
 
     for category_key in recommendations:
         for rec in recommendations[category_key]:

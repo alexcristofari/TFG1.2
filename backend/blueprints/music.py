@@ -62,11 +62,11 @@ class MusicRecommender:
         self.is_ready = False
         try:
             print("Carregando cache de músicas (v13.3)...")
-            base_dir = os.path.dirname(__file__)
-            CACHE_DIR = os.path.join(base_dir, 'cache')
-            self.df_music = pd.read_parquet(os.path.join(CACHE_DIR, 'music_processed.parquet'))
-            with open(os.path.join(CACHE_DIR, 'music_feature_matrix.pkl'), 'rb') as f: self.feature_matrix = pickle.load(f)
-            with open(os.path.join(CACHE_DIR, 'music_genres.json'), 'r', encoding='utf-8') as f: self.all_genres = json.load(f)
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            CACHE_DIR = os.path.join(base_dir, '..', 'music', 'cache')
+            self.df_music = pd.read_parquet(os.path.join(CACHE_DIR, 'music_data.parquet'))
+            with open(os.path.join(CACHE_DIR, 'feature_matrix.pkl'), 'rb') as f: self.feature_matrix = pickle.load(f)
+            with open(os.path.join(CACHE_DIR, 'genres.json'), 'r', encoding='utf-8') as f: self.all_genres = json.load(f)
             self.is_ready = True
             print(f">>> Sistema de músicas pronto. {len(self.df_music)} faixas carregadas. <<<")
         except Exception as e:
@@ -175,13 +175,45 @@ def recommend():
         if not track_ids or len(track_ids) < 3: return jsonify({"error": "São necessárias pelo menos 3 músicas."}), 400
         recs_df = recommender.get_recommendations(track_ids, genre_to_explore=genre)
         if recs_df.empty: return jsonify({"recommendations": {}, "profile": {}})
-        main_recs = recs_df.head(8)
-        hidden_gems = recs_df[recs_df['popularity'] < 50].head(8)
-        high_energy = recs_df[recs_df['energy'] > 0.8].head(8)
-        recommendations = {"main": main_recs.to_dict('records'), "hidden_gems": hidden_gems.to_dict('records'), "high_energy": high_energy.to_dict('records')}
+        
+        used_ids = set()
+        recommendations = {}
+        
+        # 1. Recomendações Principais: 10 itens
+        main_recs = recs_df[~recs_df['id'].isin(used_ids)].head(10)
+        recommendations["main"] = main_recs.to_dict('records')
+        used_ids.update(main_recs['id'].tolist())
+        
+        # 2. Explorando Gênero: 5 itens (se selecionado)
         if genre:
-            genre_recs = recs_df[recs_df['genres'].astype(str).str.contains(genre, case=False, na=False)].head(8)
-            recommendations["genre_favorites"] = genre_recs.to_dict('records')
+            genre_recs = recs_df[
+                (recs_df['genres'].astype(str).str.contains(genre, case=False, na=False)) &
+                (~recs_df['id'].isin(used_ids))
+            ].head(5)
+            if not genre_recs.empty:
+                recommendations["genre_favorites"] = genre_recs.to_dict('records')
+                used_ids.update(genre_recs['id'].tolist())
+        
+        # 3. Músicas Populares: 5 itens (alta popularidade)
+        if 'popularity' in recs_df.columns:
+            popular = recs_df[
+                (recs_df['popularity'] > recommender.df_music['popularity'].quantile(0.7)) &
+                (~recs_df['id'].isin(used_ids))
+            ].head(5)
+            if not popular.empty:
+                recommendations["popular"] = popular.to_dict('records')
+                used_ids.update(popular['id'].tolist())
+        
+        # 4. Jóias Escondidas: 5 itens (baixa popularidade + alta similaridade)
+        if 'popularity' in recs_df.columns and 'final_score' in recs_df.columns:
+            hidden_gems = recs_df[
+                (recs_df['popularity'] < recommender.df_music['popularity'].quantile(0.3)) &
+                (recs_df['final_score'] > recs_df['final_score'].quantile(0.75)) &
+                (~recs_df['id'].isin(used_ids))
+            ].head(5)
+            if not hidden_gems.empty:
+                recommendations["hidden_gems"] = hidden_gems.to_dict('records')
+        
         profile_df = recommender.df_music[recommender.df_music['id'].isin(track_ids)]
         favorite_genre = profile_df['genres'].str.split(', ').explode().mode()
         profile = {"tracks": profile_df[['id', 'name']].to_dict('records'), "favorite_genre": favorite_genre[0] if not favorite_genre.empty else "Variado"}

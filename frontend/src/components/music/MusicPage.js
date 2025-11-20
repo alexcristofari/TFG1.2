@@ -317,22 +317,9 @@ function MusicPage() {
 
   const TRACKS_PER_PAGE = 18; // Aumentado de 12 para 18 (6x3)
 
-  // Prioriza músicas populares (pop, rock, hip-hop)
+  // Processar todas as músicas sem filtro de gênero
   const allTracks = useMemo(() => {
     let primary = iconicTracks;
-    
-    // Filtrar apenas gêneros populares e conhecidos
-    primary = primary.filter(track => {
-      const genre = (track.genres || track.track_genre || '').toLowerCase();
-      // Manter: pop, rock, hip-hop, indie, eletrônica, dance
-      // Remover: latin, reggaeton, samba, world, folk
-      return !genre.includes('latin') && 
-             !genre.includes('reggaeton') && 
-             !genre.includes('samba') &&
-             !genre.includes('world') &&
-             !genre.includes('folk') &&
-             !genre.includes('country');
-    });
     
     // Ordenar por popularidade (maior primeiro)
     primary.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
@@ -341,7 +328,7 @@ function MusicPage() {
       (track, index, self) => index === self.findIndex((t) => t.id === track.id)
     );
     
-    return unique.slice(0, 120); // Aumentado de 60 para 120
+    return unique.slice(0, 120); // Mostrar até 120 músicas
   }, [iconicTracks]);
 
   const totalPages = Math.ceil(allTracks.length / TRACKS_PER_PAGE);
@@ -629,3 +616,4 @@ function MusicPage() {
 }
 
 export default MusicPage;
+
