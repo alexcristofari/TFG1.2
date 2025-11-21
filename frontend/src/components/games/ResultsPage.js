@@ -9,7 +9,7 @@ const PageStyles = () => (
       min-height: 100vh;
       background-color: #0a0a0a;
       color: #f5f5f5;
-      padding: 4rem 2rem;
+      padding: 2rem 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -22,87 +22,90 @@ const PageStyles = () => (
 
     .results-header {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
     }
 
     .results-title {
-      font-size: 2.5rem;
+      font-size: 2rem;
       font-weight: 600;
-      color: #072347ff;
+      color: #1B2838;
       letter-spacing: -0.02em;
-      margin-bottom: 1rem;
+      margin-bottom: 0;
       line-height: 1.2;
     }
 
     .profile-summary {
-      background-color: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 2rem;
-      border-radius: 16px;
-      margin-bottom: 4rem;
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      margin: 2rem 0 3rem 0;
     }
 
-    .profile-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #f5f5f5;
-      margin-bottom: 1.5rem;
-      letter-spacing: 0;
+    .profile-compact {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .profile-label {
+      font-size: 0.85rem;
+      color: #888;
+      margin-right: 0.5rem;
     }
 
     .profile-games {
       display: flex;
+      align-items: center;
+      gap: 0.5rem;
       flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
     }
 
     .profile-game-tag {
-      background-color: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background-color: rgba(27, 40, 56, 0.3);
+      border: 1px solid rgba(27, 40, 56, 0.5);
       color: #f5f5f5;
-      padding: 0.5rem 1.25rem;
-      border-radius: 50px;
-      font-size: 0.85rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
       font-weight: 400;
-      letter-spacing: 0.3px;
-    }
-
-    .profile-highlights {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
+      letter-spacing: 0.2px;
     }
 
     .profile-highlight {
-      background: linear-gradient(135deg, rgba(27, 40, 56, 0.5), rgba(40, 60, 80, 0.3));
-      border: 1px solid rgba(27, 40, 56, 0.7);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background-color: rgba(27, 40, 56, 0.25);
+      border: 1px solid rgba(27, 40, 56, 0.4);
       color: #f5f5f5;
-      padding: 0.75rem 1.5rem;
-      border-radius: 50px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      letter-spacing: 0.3px;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 400;
+      letter-spacing: 0.2px;
     }
 
     .category-section {
-      margin: 4rem 0;
+      margin: 3rem 0;
     }
 
     .category-title {
-      font-size: 1.6rem;
-      font-weight: 600;
+      font-size: 1.4rem;
+      font-weight: 500;
       color: #f5f5f5;
-      margin-bottom: 2rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0;
+      border-bottom: none;
       letter-spacing: -0.01em;
     }
 
     .results-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.5rem;
     }
 
     @media (max-width: 1200px) {
@@ -129,19 +132,18 @@ const PageStyles = () => (
 
     .back-button {
       background: linear-gradient(135deg, #1B2838, #2C3E50);
-      border: 1px solid rgba(27, 40, 56, 0.7);
+      border: none;
       color: #f5f5f5;
-      padding: 1rem 2.5rem;
-      border-radius: 50px;
-      font-size: 1rem;
+      padding: 0.85rem 2rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
       font-weight: 500;
       font-family: 'Inter', sans-serif;
       cursor: pointer;
       transition: all 0.3s ease;
-      letter-spacing: 0.5px;
-      margin: 4rem auto 0;
+      letter-spacing: 0.3px;
+      margin: 3rem auto 2rem;
       display: block;
-      border: none;
     }
 
     .back-button:hover {
@@ -167,8 +169,17 @@ function ResultsPage({ recommendations, profile, onBack }) {
   const categories = recommendations || {};
   const { games, dominant_genre, selected_genre, all_genres } = profile || {};
 
-  const renderCategory = (title, gamesList) => {
+  // Mapeamento de categorias em inglês para português
+  const categoryTitles = {
+    'main': 'Recomendações Principais',
+    'genre_favorites': selected_genre ? `Explorando ${selected_genre}` : 'Favoritos do Gênero',
+    'famous': 'Jogos Famosos',
+    'hidden_gems': 'Jóias Escondidas'
+  };
+
+  const renderCategory = (categoryKey, gamesList) => {
     if (!gamesList || gamesList.length === 0) return null;
+    const title = categoryTitles[categoryKey] || categoryKey;
     return (
       <motion.section className="category-section" variants={itemVariants}>
         <h2 className="category-title">{title}</h2>
@@ -195,31 +206,27 @@ function ResultsPage({ recommendations, profile, onBack }) {
             <h1 className="results-title">Suas Recomendações de Jogos</h1>
           </motion.header>
 
-          {profile && (
+          {profile && (games || dominant_genre || selected_genre) && (
             <motion.div className="profile-summary" variants={itemVariants}>
-              <h3 className="profile-title">Seu Perfil de Jogos</h3>
-
-              {games && games.length > 0 && (
-                <>
+              <div className="profile-compact">
+                {games && games.length > 0 && (
                   <div className="profile-games">
+                    <span className="profile-label">Baseado em:</span>
                     {games.map(game => (
                       <span key={game.appid} className="profile-game-tag">
                         {game.name}
                       </span>
                     ))}
                   </div>
-                </>
-              )}
-
-              <div className="profile-highlights">
+                )}
                 {dominant_genre && (
                   <span className="profile-highlight">
-                    Gênero Dominante: {dominant_genre}
+                    🎮 {dominant_genre}
                   </span>
                 )}
                 {selected_genre && (
                   <span className="profile-highlight">
-                    Explorando: {selected_genre}
+                    🔍 Explorando: {selected_genre}
                   </span>
                 )}
               </div>

@@ -9,7 +9,7 @@ const PageStyles = () => (
       min-height: 100vh;
       background-color: #0a0a0a;
       color: #f5f5f5;
-      padding: 4rem 2rem;
+      padding: 2rem 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -22,111 +22,90 @@ const PageStyles = () => (
 
     .music-results-header {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
     }
 
     .music-results-title {
-      font-size: 2.5rem;
+      font-size: 2rem;
       font-weight: 600;
       color: #1DB954;
       letter-spacing: -0.02em;
-      margin-bottom: 1rem;
+      margin-bottom: 0;
       line-height: 1.2;
     }
 
     .music-profile-summary {
-      background-color: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 2rem;
-      border-radius: 16px;
-      margin-bottom: 4rem;
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      margin: 2rem 0 3rem 0;
     }
 
-    .music-profile-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #f5f5f5;
-      margin-bottom: 1.5rem;
-      letter-spacing: 0;
+    .music-profile-compact {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .music-profile-label {
+      font-size: 0.85rem;
+      color: #888;
+      margin-right: 0.5rem;
     }
 
     .music-profile-tracks {
       display: flex;
+      align-items: center;
+      gap: 0.5rem;
       flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
     }
 
     .music-profile-track-tag {
-      background-color: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background-color: rgba(29, 185, 84, 0.2);
+      border: 1px solid rgba(29, 185, 84, 0.4);
       color: #f5f5f5;
-      padding: 0.5rem 1.25rem;
-      border-radius: 50px;
-      font-size: 0.85rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
       font-weight: 400;
-      letter-spacing: 0.3px;
-    }
-
-    .music-profile-genres-label {
-      font-size: 0.9rem;
-      color: #a0a0a0;
-      margin-bottom: 0.75rem;
-      letter-spacing: 0.3px;
-    }
-
-    .music-profile-genres {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .music-profile-genre-tag {
-      background-color: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #f5f5f5;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 400;
-    }
-
-    .music-profile-highlights {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
+      letter-spacing: 0.2px;
     }
 
     .music-profile-highlight {
-      background: linear-gradient(135deg, rgba(29, 185, 84, 0.3), rgba(20, 140, 64, 0.2));
-      border: 1px solid rgba(29, 185, 84, 0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background-color: rgba(29, 185, 84, 0.15);
+      border: 1px solid rgba(29, 185, 84, 0.3);
       color: #f5f5f5;
-      padding: 0.75rem 1.5rem;
-      border-radius: 50px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      letter-spacing: 0.3px;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 400;
+      letter-spacing: 0.2px;
     }
 
     .music-category-section {
-      margin: 4rem 0;
+      margin: 3rem 0;
     }
 
     .music-category-title {
-      font-size: 1.6rem;
-      font-weight: 600;
+      font-size: 1.4rem;
+      font-weight: 500;
       color: #f5f5f5;
-      margin-bottom: 2rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0;
+      border-bottom: none;
       letter-spacing: -0.01em;
     }
 
     .music-results-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.5rem;
     }
 
     @media (max-width: 1200px) {
@@ -153,19 +132,18 @@ const PageStyles = () => (
 
     .music-back-button {
       background: linear-gradient(135deg, #1DB954, #148C40);
-      border: 1px solid rgba(29, 185, 84, 0.5);
+      border: none;
       color: #f5f5f5;
-      padding: 1rem 2.5rem;
-      border-radius: 50px;
-      font-size: 1rem;
+      padding: 0.85rem 2rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
       font-weight: 500;
       font-family: 'Inter', sans-serif;
       cursor: pointer;
       transition: all 0.3s ease;
-      letter-spacing: 0.5px;
-      margin: 4rem auto 0;
+      letter-spacing: 0.3px;
+      margin: 3rem auto 2rem;
       display: block;
-      border: none;
     }
 
     .music-back-button:hover {
@@ -223,43 +201,27 @@ function MusicResultsPage({ recommendations, profile, onBack }) {
             <h1 className="music-results-title">Suas Recomendações Musicais</h1>
           </motion.header>
 
-          {profile && (
+          {profile && (tracks || dominant_genre || selected_genre) && (
             <motion.div className="music-profile-summary" variants={itemVariants}>
-              <h3 className="music-profile-title">Seu Perfil Musical</h3>
-
-              {tracks && tracks.length > 0 && (
-                <>
-                  <p className="music-profile-genres-label">Músicas selecionadas:</p>
+              <div className="music-profile-compact">
+                {tracks && tracks.length > 0 && (
                   <div className="music-profile-tracks">
+                    <span className="music-profile-label">Baseado em:</span>
                     {tracks.map(track => (
                       <span key={track.id} className="music-profile-track-tag">
                         {track.name || track.track_name}
                       </span>
                     ))}
                   </div>
-                </>
-              )}
-
-              {genres_found && genres_found.length > 0 && (
-                <>
-                  <p className="music-profile-genres-label">Gêneros encontrados na sua seleção:</p>
-                  <div className="music-profile-genres">
-                    {genres_found.map((genre, idx) => (
-                      <span key={idx} className="music-profile-genre-tag">{genre}</span>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              <div className="music-profile-highlights">
+                )}
                 {dominant_genre && (
                   <span className="music-profile-highlight">
-                    Gênero Dominante: {dominant_genre}
+                    🎵 {dominant_genre}
                   </span>
                 )}
                 {selected_genre && (
                   <span className="music-profile-highlight">
-                    Explorando: {selected_genre}
+                     Explorando: {selected_genre}
                   </span>
                 )}
               </div>
