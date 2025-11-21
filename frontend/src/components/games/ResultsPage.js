@@ -221,12 +221,12 @@ function ResultsPage({ recommendations, profile, onBack }) {
                 )}
                 {dominant_genre && (
                   <span className="profile-highlight">
-                    🎮 {dominant_genre}
+                     {dominant_genre}
                   </span>
                 )}
                 {selected_genre && (
                   <span className="profile-highlight">
-                    🔍 Explorando: {selected_genre}
+                     Explorando: {selected_genre}
                   </span>
                 )}
               </div>
