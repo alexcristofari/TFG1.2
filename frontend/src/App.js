@@ -1,4 +1,4 @@
-// frontend/src/App.js (v6.0 - Integração com Design Minimalista)
+// frontend/src/App.js (v6.3 - Corrigido Erro de Importação)
 import React, { useState } from 'react';
 import './App.css';
 
@@ -7,6 +7,9 @@ import HomePage from './components/home/HomePage';
 import GamesPage from './components/games/GamesPage';
 import MusicPage from './components/music/MusicPage';
 import MoviePage from './components/movies/MoviePage';
+// Novos componentes de informação
+import AboutSimilarity from './components/info/AboutSimilarity';
+import ContactPage from './components/info/ContactPage';
 
 // Importa o DataProvider e o hook useData
 import { DataProvider, useData } from './context/DataContext';
@@ -14,6 +17,9 @@ import { DataProvider, useData } from './context/DataContext';
 // Componente interno para ter acesso ao contexto
 function AppContent() {
   const [activeSystem, setActiveSystem] = useState('home');
+  // Estados para controlar a visibilidade dos modais
+  const [showAbout, setShowAbout] = useState(false);
+  const [showContact, setShowContact] = useState(false);
   
   // Pega o estado de loading e o status do Contexto Global
   const { isLoading, loadingStatus } = useData();
@@ -98,7 +104,14 @@ function AppContent() {
         );
       case 'home':
       default:
-        return <HomePage onSelectSystem={setActiveSystem} />;
+        // Passa as funções para abrir os modais para a HomePage
+        return (
+          <HomePage 
+            onSelectSystem={setActiveSystem}
+            onOpenAbout={() => setShowAbout(true)}
+            onOpenContact={() => setShowContact(true)}
+          />
+        );
     }
   };
 
@@ -107,6 +120,10 @@ function AppContent() {
       <main>
         {renderActiveSystem()}
       </main>
+      
+      {/* Renderiza os modais fora do switch, controlados pelos estados showAbout/showContact */}
+      <AboutSimilarity isOpen={showAbout} onClose={() => setShowAbout(false)} />
+      <ContactPage isOpen={showContact} onClose={() => setShowContact(false)} />
     </div>
   );
 }

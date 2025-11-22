@@ -1,4 +1,4 @@
-// frontend/src/components/home/HomePage.js (v3.0 - Zero Starting Ideas Inspired Design)
+// frontend/src/components/home/HomePage.js (v3.1 - Callbacks para modais)
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled, { createGlobalStyle } from 'styled-components';
@@ -137,7 +137,7 @@ const Counter = styled.div`
 
 // --- COMPONENTE PRINCIPAL ---
 
-function HomePage({ onSelectSystem }) {
+function HomePage({ onSelectSystem, onOpenAbout, onOpenContact }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const scrollTimeout = useRef(null);
@@ -205,8 +205,12 @@ function HomePage({ onSelectSystem }) {
       <HomeContainer>
         {/* Menu Superior Direito */}
         <TopNav>
-          <NavLink href="#similaridade" data-testid="nav-link-similaridade">similaridade</NavLink>
-          <NavLink href="#contato" data-testid="nav-link-contato">contato</NavLink>
+          <NavLink onClick={onOpenAbout} data-testid="nav-link-similaridade">
+            similaridade
+          </NavLink>
+          <NavLink onClick={onOpenContact} data-testid="nav-link-contato">
+            contato
+          </NavLink>
         </TopNav>
 
         {/* Conteúdo Central */}

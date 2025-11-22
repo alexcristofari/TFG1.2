@@ -29,7 +29,7 @@ const AboutSimilarity = ({ isOpen, onClose }) => {
           {/* JOGOS */}
           <section className="modal-section">
             <div className="section-header">
-              <span className="section-icon">🎮</span>
+              <span className="section-icon"></span>
               <h2 className="section-title">Jogos</h2>
             </div>
             <p className="section-description">
@@ -70,7 +70,7 @@ const AboutSimilarity = ({ isOpen, onClose }) => {
           {/* MÚSICAS */}
           <section className="modal-section">
             <div className="section-header">
-              <span className="section-icon">🎵</span>
+              <span className="section-icon"></span>
               <h2 className="section-title">Músicas</h2>
             </div>
             <p className="section-description">
@@ -99,7 +99,7 @@ const AboutSimilarity = ({ isOpen, onClose }) => {
           {/* FILMES */}
           <section className="modal-section">
             <div className="section-header">
-              <span className="section-icon">🎬</span>
+              <span className="section-icon"></span>
               <h2 className="section-title">Filmes</h2>
             </div>
             <p className="section-description">
