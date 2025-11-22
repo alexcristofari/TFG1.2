@@ -1,0 +1,670 @@
+"# 📚 MANUAL DE INSTALAÇÃO E USO
+## Sistema de Recomendação de Músicas, Filmes e Jogos
+
+**Desenvolvedor**: Alexsander Brum Cristofari  
+**Instituição**: Universidade Franciscana - UFN  
+**Repositório**: https://github.com/alexcristofari/TFG1.2
+
+---
+
+## 📋 ÍNDICE
+
+1. [Introdução](#introdução)
+2. [Requisitos do Sistema](#requisitos-do-sistema)
+3. [Instalação Passo a Passo](#instalação-passo-a-passo)
+4. [Executando o Sistema](#executando-o-sistema)
+5. [Usando o Sistema](#usando-o-sistema)
+6. [Solução de Problemas](#solução-de-problemas)
+7. [Especificações Técnicas](#especificações-técnicas)
+8. [Suporte](#suporte)
+
+---
+
+## 🎯 INTRODUÇÃO
+
+### Sobre o Sistema
+
+O sistema utiliza algoritmos de filtragem baseada em conteúdo para fornecer recomendações personalizadas em três domínios:
+
+- **🎵 Músicas**: Baseado em dados do Spotify (170.000+ músicas)
+- **🎬 Filmes**: Baseado em dados do TMDB (5.000+ filmes)
+- **🎮 Jogos**: Baseado em dados da Steam (800+ jogos)
+
+### Arquitetura do Sistema
+
+O sistema possui uma arquitetura de microserviços com:
+
+- **API Gateway** (Flask - Porta 5000): Gerencia requisições
+- **Backend de Jogos** (Flask - Porta 5001): Recomendações de jogos Steam
+- **Backend de Músicas** (Flask - Porta 5002): Recomendações musicais
+- **Backend de Filmes** (Flask - Porta 5003): Recomendações de filmes
+- **Frontend** (React - Porta 3000): Interface do usuário
+
+> ⚠️ **IMPORTANTE**: O sistema utiliza Git LFS (Large File Storage) para gerenciar arquivos grandes como datasets em formato Parquet, PKL e CSV.
+
+---
+
+## 💻 REQUISITOS DO SISTEMA
+
+### Hardware
+
+- **Processador**: Intel Core i5 ou superior (recomendado)
+- **Memória RAM**: 8 GB mínimo (16 GB recomendado)
+- **Espaço em Disco**: 5 GB livres
+- **Conexão Internet**: Necessária para download de dependências
+
+### Software Necessário
+
+1. **Python 3.8+**: https://www.python.org/downloads/
+2. **Node.js 16+**: https://nodejs.org/
+3. **Git**: https://git-scm.com/downloads
+4. **Git LFS**: https://git-lfs.github.com/
+
+### Sistemas Operacionais Suportados
+
+- ✅ Windows 10/11
+- ✅ macOS 10.15 ou superior
+- ✅ Linux (Ubuntu 20.04+, Debian, Fedora)
+
+---
+
+## 🚀 INSTALAÇÃO PASSO A PASSO
+
+### PASSO 1: Instalar Dependências Básicas
+
+#### 🪟 WINDOWS
+
+**1. Instalar Python:**
+```bash
+# Baixe o instalador em: https://www.python.org/downloads/
+# Durante a instalação, marque \"Add Python to PATH\"
+```
+
+Verificar instalação:
+```bash
+python --version
+pip --version
+```
+
+**2. Instalar Node.js:**
+```bash
+# Baixe o instalador LTS em: https://nodejs.org/
+# Execute o instalador e siga as instruções
+```
+
+Verificar instalação:
+```bash
+node --version
+npm --version
+```
+
+**3. Instalar Git:**
+```bash
+# Baixe o instalador em: https://git-scm.com/download/win
+# Execute e use configurações padrão
+```
+
+Verificar instalação:
+```bash
+git --version
+```
+
+**4. Instalar Git LFS:**
+```bash
+# Baixe o instalador em: https://git-lfs.github.com/
+# Execute o instalador e depois:
+git lfs install
+```
+
+---
+
+#### 🐧 LINUX (Ubuntu/Debian)
+
+```bash
+# Atualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# Instalar Python e pip
+sudo apt install python3 python3-pip -y
+
+# Instalar Node.js e npm
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install nodejs -y
+
+# Instalar Git
+sudo apt install git -y
+
+# Instalar Git LFS
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+sudo apt install git-lfs -y
+git lfs install
+
+# Verificar instalações
+python3 --version
+node --version
+git --version
+git lfs version
+```
+
+---
+
+#### 🍎 macOS
+
+```bash
+# Instalar Homebrew (se não tiver)
+/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"
+
+# Instalar Python
+brew install python
+
+# Instalar Node.js
+brew install node
+
+# Instalar Git
+brew install git
+
+# Instalar Git LFS
+brew install git-lfs
+git lfs install
+
+# Verificar instalações
+python3 --version
+node --version
+git --version
+git lfs version
+```
+
+---
+
+### PASSO 2: Clonar o Repositório
+
+⏰ **Este passo pode levar alguns minutos devido ao download de datasets grandes via Git LFS.**
+
+```bash
+# Clonar o repositório
+git clone https://github.com/alexcristofari/TFG1.2.git
+
+# Entrar no diretório
+cd TFG1.2
+
+# Baixar arquivos grandes via Git LFS
+git lfs pull
+```
+
+---
+
+### PASSO 3: Configurar Backend
+
+#### Instalar Dependências Python Globais
+
+```bash
+# No diretório raiz do projeto
+pip install flask flask-cors numpy pandas scikit-learn
+```
+
+#### Configurar API Gateway
+
+```bash
+cd api-gateway
+
+# Se houver requirements.txt:
+pip install -r requirements.txt
+
+# Voltar ao diretório raiz
+cd ..
+```
+
+#### Configurar Backends Individuais
+
+**Backend de Jogos (Steam):**
+```bash
+cd backend/steam
+pip install -r requirements.txt
+cd ../..
+```
+
+**Backend de Músicas:**
+```bash
+cd backend/music
+pip install -r requirements.txt
+cd ../..
+```
+
+**Backend de Filmes:**
+```bash
+cd backend/movies
+pip install -r requirements.txt
+cd ../..
+```
+
+---
+
+### PASSO 4: Configurar Frontend
+
+```bash
+# Entrar no diretório frontend
+cd frontend
+
+# Instalar dependências Node.js
+npm install
+
+# Voltar ao diretório raiz
+cd ..
+```
+
+✅ **Instalação Concluída!** Todas as dependências foram instaladas com sucesso!
+
+---
+
+## ▶️ EXECUTANDO O SISTEMA
+
+### Método 1: Execução Manual (5 Terminais)
+
+Para executar o sistema completo, você precisa abrir **5 terminais diferentes**:
+
+#### Terminal 1: API Gateway
+
+**Windows:**
+```bash
+cd api-gateway
+python -m flask --app gateway run --port=5000 --no-reload
+```
+
+**Linux/macOS:**
+```bash
+cd api-gateway
+python3 -m flask --app gateway run --port=5000 --no-reload
+```
+
+---
+
+#### Terminal 2: Backend de Jogos
+
+**Windows:**
+```bash
+cd backend/steam
+python -m flask run --port=5001 --no-reload
+```
+
+**Linux/macOS:**
+```bash
+cd backend/steam
+python3 -m flask run --port=5001 --no-reload
+```
+
+---
+
+#### Terminal 3: Backend de Músicas
+
+**Windows:**
+```bash
+cd backend/music
+python -m flask run --port=5002 --no-reload
+```
+
+**Linux/macOS:**
+```bash
+cd backend/music
+python3 -m flask run --port=5002 --no-reload
+```
+
+---
+
+#### Terminal 4: Backend de Filmes
+
+**Windows:**
+```bash
+cd backend/movies
+python -m flask run --port=5003 --no-reload
+```
+
+**Linux/macOS:**
+```bash
+cd backend/movies
+python3 -m flask run --port=5003 --no-reload
+```
+
+---
+
+#### Terminal 5: Frontend React
+
+```bash
+cd frontend
+npm start
+```
+
+🌐 **Acesso ao Sistema**: Após iniciar todos os serviços, o navegador abrirá automaticamente em: **http://localhost:3000**
+
+---
+
+### Método 2: Script de Inicialização Automática
+
+#### 🪟 Windows - Criar arquivo `start.bat`
+
+Crie um arquivo `start.bat` no diretório raiz com o seguinte conteúdo:
+
+```batch
+@echo off
+echo Iniciando Sistema de Recomendacao...
+
+start \"API Gateway\" cmd /k \"cd api-gateway && python -m flask --app gateway run --port=5000 --no-reload\"
+timeout /t 3
+
+start \"Backend Steam\" cmd /k \"cd backend\steam && python -m flask run --port=5001 --no-reload\"
+timeout /t 2
+
+start \"Backend Music\" cmd /k \"cd backend\music && python -m flask run --port=5002 --no-reload\"
+timeout /t 2
+
+start \"Backend Movies\" cmd /k \"cd backend\movies && python -m flask run --port=5003 --no-reload\"
+timeout /t 2
+
+start \"Frontend\" cmd /k \"cd frontend && npm start\"
+
+echo Sistema iniciado! Aguarde o navegador abrir...
+```
+
+**Execute com duplo clique no arquivo `start.bat`**
+
+---
+
+#### 🐧🍎 Linux/macOS - Criar arquivo `start.sh`
+
+Crie um arquivo `start.sh` no diretório raiz com o seguinte conteúdo:
+
+```bash
+#!/bin/bash
+echo \"Iniciando Sistema de Recomendacao...\"
+
+# API Gateway
+gnome-terminal -- bash -c \"cd api-gateway && python3 -m flask --app gateway run --port=5000 --no-reload; exec bash\"
+sleep 3
+
+# Backend Steam
+gnome-terminal -- bash -c \"cd backend/steam && python3 -m flask run --port=5001 --no-reload; exec bash\"
+sleep 2
+
+# Backend Music
+gnome-terminal -- bash -c \"cd backend/music && python3 -m flask run --port=5002 --no-reload; exec bash\"
+sleep 2
+
+# Backend Movies
+gnome-terminal -- bash -c \"cd backend/movies && python3 -m flask run --port=5003 --no-reload; exec bash\"
+sleep 2
+
+# Frontend
+gnome-terminal -- bash -c \"cd frontend && npm start; exec bash\"
+
+echo \"Sistema iniciado!\"
+```
+
+**Dar permissão e executar:**
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+---
+
+## 🎮 USANDO O SISTEMA
+
+### Navegação Inicial
+
+Ao acessar http://localhost:3000, você verá a página inicial com três opções:
+
+- 🎵 **Recomendações de Músicas**
+- 🎬 **Recomendações de Filmes**
+- 🎮 **Recomendações de Jogos**
+
+---
+
+### 🎵 Gerando Recomendações de Músicas
+
+1. Clique em **\"Recomendações de Músicas\"**
+2. Selecione de **3 a 5 músicas** que você gosta
+3. Clique em **\"Obter Recomendações\"**
+4. O sistema processará e exibirá:
+   - **Recomendações Principais**: Músicas similares às selecionadas
+   - **Joias Escondidas**: Músicas menos conhecidas que combinam com seu gosto
+   - **Clássicos do seu Estilo**: Músicas populares do gênero
+
+---
+
+### 🎬 Gerando Recomendações de Filmes
+
+1. Clique em **\"Recomendações de Filmes\"**
+2. Selecione de **3 a 5 filmes** que você assistiu e gostou
+3. Clique em **\"Obter Recomendações\"**
+4. Visualize as recomendações categorizadas
+
+---
+
+### 🎮 Gerando Recomendações de Jogos
+
+1. Clique em **\"Recomendações de Jogos\"**
+2. Selecione de **3 a 5 jogos** que você jogou e curtiu
+3. Clique em **\"Obter Recomendações\"**
+4. Explore as sugestões personalizadas
+
+---
+
+## 🔧 SOLUÇÃO DE PROBLEMAS
+
+### ❌ Erro: \"Porta já em uso\"
+
+**Problema**: Um dos serviços não inicia porque a porta está ocupada.
+
+**Solução Windows:**
+```bash
+# Verificar processo usando a porta (exemplo: 5000)
+netstat -ano | findstr :5000
+
+# Matar processo (substitua PID pelo número encontrado)
+taskkill /PID <PID> /F
+```
+
+**Solução Linux/macOS:**
+```bash
+# Verificar e matar processo (exemplo: porta 5000)
+lsof -ti:5000 | xargs kill -9
+```
+
+---
+
+### ❌ Erro: \"ModuleNotFoundError\"
+
+**Problema**: Módulo Python não encontrado.
+
+**Solução:**
+```bash
+# Reinstalar dependências
+pip install flask flask-cors numpy pandas scikit-learn
+
+# Se houver requirements.txt no diretório:
+pip install -r requirements.txt
+```
+
+---
+
+### ❌ Erro: Git LFS não baixou arquivos
+
+**Problema**: Datasets não foram baixados corretamente.
+
+**Solução:**
+```bash
+# Reinstalar Git LFS
+git lfs install
+
+# Fazer pull forçado dos arquivos
+git lfs pull
+```
+
+---
+
+### ❌ Erro: Frontend não carrega
+
+**Problema**: Página em branco ou erro no React.
+
+**Solução:**
+```bash
+cd frontend
+
+# Limpar cache e reinstalar
+rm -rf node_modules package-lock.json
+npm install
+
+# Iniciar novamente
+npm start
+```
+
+---
+
+### ❌ Erro: Backend não responde
+
+**Problema**: API Gateway ou backends não estão respondendo.
+
+**Checklist:**
+- ✅ Verificar se todos os 4 backends estão rodando
+- ✅ Verificar logs de erro nos terminais
+- ✅ Confirmar que as portas 5000-5003 estão livres
+- ✅ Verificar se os arquivos de dataset foram baixados
+
+---
+
+## 📊 ESPECIFICAÇÕES TÉCNICAS
+
+### Portas Utilizadas
+
+| Serviço | Porta |
+|---------|-------|
+| API Gateway | 5000 |
+| Backend Steam (Jogos) | 5001 |
+| Backend Music (Músicas) | 5002 |
+| Backend Movies (Filmes) | 5003 |
+| Frontend React | 3000 |
+
+---
+
+### Tecnologias Utilizadas
+
+**Backend:**
+- Flask (Framework web Python)
+- Flask-CORS (Cross-Origin Resource Sharing)
+- Pandas (Manipulação de dados)
+- NumPy (Computação numérica)
+- Scikit-learn (Machine Learning)
+
+**Frontend:**
+- React (Biblioteca JavaScript)
+- Framer Motion (Animações)
+- React Fast Marquee (Efeitos visuais)
+
+---
+
+### Estrutura de Diretórios
+
+```
+TFG1.2/
+├── api-gateway/          # Gateway principal
+├── backend/
+│   ├── steam/           # Backend de jogos
+│   ├── music/           # Backend de músicas
+│   └── movies/          # Backend de filmes
+├── frontend/            # Interface React
+│   ├── src/
+│   ├── public/
+│   └── package.json
+├── node_modules/        # Dependências Node.js
+├── package.json         # Configuração NPM raiz
+├── run.py              # Script de execução alternativo
+└── comandos.txt        # Referência de comandos
+```
+
+---
+
+## 🔄 MANUTENÇÃO E ATUALIZAÇÕES
+
+### Atualizar o Sistema
+
+```bash
+# Parar todos os serviços
+
+# Atualizar código
+git pull origin main
+
+# Atualizar arquivos grandes
+git lfs pull
+
+# Atualizar dependências Python
+pip install -r requirements.txt --upgrade
+
+# Atualizar dependências Node.js
+cd frontend
+npm update
+cd ..
+
+# Reiniciar sistema
+```
+
+---
+
+### Backup dos Dados
+
+```bash
+# Fazer backup dos datasets
+tar -czf backup_datasets.tar.gz backend/*/data/
+
+# Fazer backup das configurações
+cp -r frontend/src/config/ backup_config/
+```
+
+---
+
+## 📞 SUPORTE E CONTATO
+
+### Informações de Contato
+
+- **Desenvolvedor**: Alexsander Brum Cristofari
+- **Email**: alexcristofari2@gmail.com
+- **Repositório**: https://github.com/alexcristofari/TFG1.2
+- **Instituição**: Universidade Franciscana (UFN)
+
+### Reportar Problemas
+
+Para reportar bugs ou sugerir melhorias:
+
+1. Acesse: https://github.com/alexcristofari/TFG1.2/issues
+2. Clique em \"New Issue\"
+3. Descreva o problema detalhadamente
+4. Inclua prints e logs de erro, se possível
+
+---
+
+## 📜 LICENÇA E CRÉDITOS
+
+### Datasets Utilizados
+
+- **Músicas**: Spotify Tracks DB - https://www.kaggle.com/datasets/ymcanb/spotify-tracks-db
+- **Filmes**: TMDB 5000 Movie Dataset - https://www.kaggle.com/datasets/tmdb/tmdb-5000-movie-dataset
+- **Jogos**: Steam Store Games - https://www.kaggle.com/datasets/nikdavis/steam-store-games
+
+### Agradecimentos
+
+Este projeto foi desenvolvido como Trabalho Final de Graduação no curso de Ciência da Computação da Universidade Franciscana (UFN).
+
+Agradecimentos especiais ao orientador **Prof. Alessandro André Mainardi de Oliveira** e à comunidade open source.
+
+---
+
+**Manual versão 1.0**  
+**Sistema de Recomendação TFG 1.2**  
+*Desenvolvido por Alexsander Brum Cristofari - UFN*
+
+---
+
+## 🎉 FIM DO MANUAL
+
+Agora você tem todas as informações necessárias para instalar, configurar e usar o Sistema de Recomendação!
+
+Boa sorte com seu projeto! 🚀
+"
